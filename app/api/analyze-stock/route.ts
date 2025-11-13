@@ -74,7 +74,6 @@ async function analyzeSentimentWithAI(news: any[]) {
         apiKey: process.env.OPENROUTER_API_KEY,
     });
 
-    // Préparer le prompt optimisé (court pour économiser les tokens)
     const newsTexts = news.map((article, idx) =>
         `[${idx + 1}] ${article.headline} - ${article.summary?.substring(0, 200) || 'Pas de résumé disponible'}`
     ).join('\n\n');
