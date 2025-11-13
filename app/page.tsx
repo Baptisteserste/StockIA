@@ -1,65 +1,198 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import { Search, TrendingUp, TrendingDown, Minus, AlertCircle } from 'lucide-react';
 
 export default function Home() {
+  const [symbol, setSymbol] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState('');
+
+  const handleAnalyze = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setResult(null);
+
+    try {
+      const response = await fetch('/api/analyze-stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symbol: symbol.toUpperCase() })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de l\'analyse');
+      }
+
+      const data = await response.json();
+      setResult(data);
+    } catch (err: any) {
+      setError(err.message || 'Une erreur est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getSentimentIcon = (sentiment: string) => {
+    switch (sentiment?.toLowerCase()) {
+      case 'positif': return <TrendingUp className="text-green-500" />;
+      case 'négatif': return <TrendingDown className="text-red-500" />;
+      default: return <Minus className="text-gray-500" />;
+    }
+  };
+
+  const getSentimentColor = (sentiment: string) => {
+    switch (sentiment?.toLowerCase()) {
+      case 'positif': return 'bg-green-500/10 border-green-500/20';
+      case 'négatif': return 'bg-red-500/10 border-red-500/20';
+      default: return 'bg-gray-500/10 border-gray-500/20';
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+      {/* Header */}
+      <header className="border-b border-slate-700 bg-slate-900/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-white">
+            Stock<span className="text-blue-500">IA</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-slate-400 text-sm">Analyse de sentiment financier par IA</p>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-12">
+        {/* Search Bar */}
+        <div className="max-w-3xl mx-auto mb-12">
+          <form onSubmit={handleAnalyze} className="relative">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <input
+                  type="text"
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value)}
+                  placeholder="Entrez un symbole d'action (ex: AAPL, TSLA, MSFT)"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  disabled={loading}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading || !symbol}
+                className="px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors"
+              >
+                {loading ? 'Analyse...' : 'Analyser'}
+              </button>
+            </div>
+          </form>
+
+          {/* Exemples */}
+          <div className="mt-4 flex gap-2 flex-wrap">
+            <span className="text-slate-400 text-sm">Exemples :</span>
+            {['AAPL', 'TSLA', 'MSFT', 'NVDA'].map((ticker) => (
+              <button
+                key={ticker}
+                onClick={() => setSymbol(ticker)}
+                className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm rounded-lg transition-colors"
+                disabled={loading}
+              >
+                {ticker}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="max-w-3xl mx-auto mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400">
+            ❌ {error}
+          </div>
+        )}
+
+        {/* Results */}
+        {result && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            {/* Disclaimer */}
+            <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+              <AlertCircle className="text-amber-500 w-5 h-5 mt-0.5 flex-shrink-0" />
+              <p className="text-amber-200 text-sm">{result.disclaimer}</p>
+            </div>
+
+            {/* Sentiment Global */}
+            <div className={`p-6 border rounded-xl ${getSentimentColor(result.sentiment.sentiment_global)}`}>
+              <div className="flex items-center gap-3 mb-3">
+                {getSentimentIcon(result.sentiment.sentiment_global)}
+                <h2 className="text-xl font-bold text-white">
+                  Sentiment Global : {result.sentiment.sentiment_global?.toUpperCase()}
+                </h2>
+              </div>
+              <div className="mb-4">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-slate-400">Score de confiance</span>
+                  <span className="text-white font-semibold">{result.sentiment.score}%</span>
+                </div>
+                <div className="w-full bg-slate-700 rounded-full h-2">
+                  <div 
+                    className="bg-blue-500 h-2 rounded-full transition-all"
+                    style={{ width: `${result.sentiment.score}%` }}
+                  />
+                </div>
+              </div>
+              <p className="text-slate-300">{result.sentiment.resume}</p>
+            </div>
+
+            {/* Articles analysés */}
+            {result.sentiment.articles && result.sentiment.articles.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-white">Articles analysés</h3>
+                {result.sentiment.articles.map((article: any, idx: number) => (
+                  <div key={idx} className="p-4 bg-slate-800 border border-slate-700 rounded-xl">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-1">{getSentimentIcon(article.sentiment)}</div>
+                      <div className="flex-1">
+                        <a 
+                          href={result.sources[idx]?.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-white hover:text-blue-400 font-medium transition-colors"
+                        >
+                          {result.sources[idx]?.title}
+                        </a>
+                        <p className="text-slate-400 text-sm mt-1">{article.raison}</p>
+                        <p className="text-slate-500 text-xs mt-2">
+                          {result.sources[idx]?.source} • {new Date(result.sources[idx]?.date * 1000).toLocaleDateString('fr-FR')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Sources */}
+            <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-xl">
+              <p className="text-slate-400 text-sm">
+                📰 Sources : {result.sources?.length || 0} articles analysés via Finnhub API
+              </p>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-700 mt-20 py-8">
+        <div className="container mx-auto px-4 text-center text-slate-500 text-sm">
+          <p>© 2025 StockIA - Analyse de sentiment financier</p>
+          <p className="mt-2">
+            ⚠️ Cette application ne fournit pas de conseils financiers ou d'investissement.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </footer>
     </div>
   );
 }
