@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Search, TrendingUp, TrendingDown, Minus, AlertCircle } from 'lucide-react';
+import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 
 export default function Home() {
   const [symbol, setSymbol] = useState('');
@@ -62,6 +63,18 @@ export default function Home() {
           </h1>
           <p className="text-slate-400 text-sm">Analyse de sentiment financier par IA</p>
         </div>
+          <div>
+              <SignedIn>
+                  <UserButton afterSignOutUrl="/" />
+              </SignedIn>
+              <SignedOut>
+                  <SignInButton mode="modal">
+                      <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors">
+                          Connexion
+                      </button>
+                  </SignInButton>
+              </SignedOut>
+          </div>
       </header>
 
       {/* Main Content */}
