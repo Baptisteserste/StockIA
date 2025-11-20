@@ -57,13 +57,15 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
       <header className="border-b border-slate-700 bg-slate-900/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-white">
-            Stock<span className="text-blue-500">IA</span>
-          </h1>
-          <p className="text-slate-400 text-sm">Analyse de sentiment financier par IA</p>
-        </div>
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div>
+            <h1 className="text-2xl font-bold text-white">
+              Stock<span className="text-blue-500">IA</span>
+            </h1>
+            <p className="text-slate-400 text-sm">Analyse de sentiment financier par IA</p>
+          </div>
+          
+          <div className="flex items-center gap-4">
               <SignedIn>
                   <UserButton afterSignOutUrl="/" />
               </SignedIn>
@@ -75,6 +77,7 @@ export default function Home() {
                   </SignInButton>
               </SignedOut>
           </div>
+        </div>
       </header>
 
       {/* Main Content */}
