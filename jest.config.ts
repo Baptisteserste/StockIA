@@ -11,9 +11,13 @@ const config: Config = {
     setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/$1',
-    },
 
-    transformIgnorePatterns: [],
+
+        'crypto.mjs$': '<rootDir>/__mocks__/clerkCrypto.js',
+    },
+    transformIgnorePatterns: [
+        'node_modules/(?!.*@clerk)'
+    ],
 }
 
 export default createJestConfig(config)
