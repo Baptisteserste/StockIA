@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import Home from '../app/page'
 import { describe, it, expect, vi } from 'vitest' // On importe depuis 'vitest'
 
-// On remplace 'jest.mock' par 'vi.mock'
+// On remplace 'jest.mock' par 'vi.mock';
 vi.mock('@clerk/nextjs', () => ({
     SignedIn: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     SignedOut: ({ children }: { children: React.ReactNode }) => null,
