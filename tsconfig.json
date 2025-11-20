@@ -20,14 +20,14 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "types": ["jest", "node","@testing-library/jest-dom"]
+    "types": ["vitest/globals"]
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "jest.setup.ts",
+    "vitest.setup.ts",
     "jest.config.ts",
     "__tests__/**/*"
   ],
