@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { auth, currentUser } from "@clerk/nextjs/server"; // Import Clerk
+import prisma from "@/lib/prisma"; // Import Prisma
 
 interface NewsArticle {
     headline: string;
@@ -11,7 +13,37 @@ interface NewsArticle {
 
 export async function POST(request: NextRequest) {
     try {
-        // On type le corps de la requête pour éviter 'any'
+        // 1. AUTHENTIFICATION : On vérifie qui appelle l'API
+        const { userId } = await auth();
+        
+        if (!userId) {
+            return NextResponse.json({ error: 'Non autorisé. Veuillez vous connecter.' }, { status: 401 });
+        }
+
+        // 2. GESTION UTILISATEUR & CRÉDITS
+        let user = await prisma.user.findUnique({ where: { id: userId } });
+
+        // Si l'utilisateur n'existe pas encore en DB (première analyse directe), on le crée
+        if (!user) {
+            const clerkUser = await currentUser();
+            const email = clerkUser?.emailAddresses[0]?.emailAddress || "unknown@email.com";
+            
+            user = await prisma.user.create({
+                data: {
+                    id: userId,
+                    email: email,
+                    credits: 10 // Bonus de bienvenue
+                }
+            });
+        }
+
+        // Vérification du solde
+        if (user.credits <= 0) {
+            return NextResponse.json({ error: 'Crédits insuffisants. Veuillez recharger votre compte.' }, { status: 403 });
+        }
+
+        // --- FIN GESTION AUTH ---
+
         const body = await request.json();
         const symbol = body.symbol;
 
@@ -19,36 +51,46 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Symbole requis' }, { status: 400 });
         }
 
-        if (!process.env.FINNHUB_API_KEY) {
-            return NextResponse.json({ error: 'Configuration manquante : FINNHUB_API_KEY' }, { status: 500 });
+        if (!process.env.FINNHUB_API_KEY || !process.env.OPENROUTER_API_KEY) {
+            return NextResponse.json({ error: 'Configuration serveur manquante' }, { status: 500 });
         }
 
-        if (!process.env.OPENROUTER_API_KEY) {
-            return NextResponse.json({ error: 'Configuration manquante : OPENROUTER_API_KEY' }, { status: 500 });
-        }
-
-        // 1. Récupérer les news
+        // 3. Récupération News
         const newsResponse = await fetch(
             `https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${getDateDaysAgo(7)}&to=${getTodayDate()}&token=${process.env.FINNHUB_API_KEY}`
         );
 
-        if (!newsResponse.ok) {
-            return NextResponse.json({ error: 'Impossible de récupérer les actualités' }, { status: 404 });
-        }
-
-        // ICI : On force le type pour dire à TS "T'inquiète, c'est bien un tableau d'articles"
+        if (!newsResponse.ok) throw new Error('Erreur Finnhub');
+        
         const news = (await newsResponse.json()) as NewsArticle[];
-
-        if (!news || news.length === 0) {
-            return NextResponse.json({ error: 'Aucune actualité trouvée' }, { status: 404 });
-        }
+        if (!news || news.length === 0) return NextResponse.json({ error: 'Aucune actualité trouvée' }, { status: 404 });
 
         const limitedNews = news.slice(0, 5);
 
-        // 2. Analyser
+        // 4. Analyse IA
         const sentimentAnalysis = await analyzeSentimentWithAI(limitedNews);
 
-        console.log(`[AI Usage] Symbol: ${symbol}, Tokens: ${sentimentAnalysis.tokensUsed}, Cost: $${sentimentAnalysis.cost.toFixed(6)}`);
+        // 5. SAUVEGARDE EN BASE DE DONNÉES (Transaction)
+        // On déduit 1 crédit ET on enregistre le log en même temps
+        await prisma.$transaction([
+            // Décrémenter les crédits
+            prisma.user.update({
+                where: { id: userId },
+                data: { credits: { decrement: 1 } }
+            }),
+            // Créer le log
+            prisma.analysisLog.create({
+                data: {
+                    userId: userId,
+                    symbol: symbol,
+                    sentiment: sentimentAnalysis.sentiment.sentiment_global || 'neutre',
+                    tokens: sentimentAnalysis.tokensUsed,
+                    cost: sentimentAnalysis.cost
+                }
+            })
+        ]);
+
+        console.log(`[Succès] Analyse ${symbol} pour ${userId}. Coût: ${sentimentAnalysis.cost}$`);
 
         return NextResponse.json({
             symbol,
@@ -59,13 +101,9 @@ export async function POST(request: NextRequest) {
         });
 
     } catch (error: unknown) {
-        // Gestion d'erreur typée proprement
         console.error('Erreur analyse:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue lors de l\'analyse';
-
-        return NextResponse.json({
-            error: errorMessage
-        }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }
 
@@ -95,7 +133,7 @@ async function analyzeSentimentWithAI(news: NewsArticle[]) {
 
     const response = completion.choices[0].message.content || '{}';
     let sentimentData;
-
+    
     try {
         const cleanedResponse = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         sentimentData = JSON.parse(cleanedResponse);
