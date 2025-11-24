@@ -33,3 +33,126 @@ model AnalysisLog {
 
   user User @relation(fields: [userId], references: [id])
 }
+
+// ===== PROVIDER ICONS =====
+
+model ProviderIcon {
+  id        String   @id @default(cuid())
+  name      String   @unique // Ex: "OpenAI", "Anthropic", "Google"
+  url       String   // URL absolue de l'icône
+  slug      String?  // Slug OpenRouter (ex: "openai")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  models    AiModel[]
+
+  @@index([name])
+}
+
+model AiModel {
+  id                    String        @id @default(cuid())
+  modelId               String        @unique // Ex: "openai/gpt-4-turbo"
+  name                  String        // Ex: "OpenAI: GPT-4 Turbo"
+  providerName          String        // FK vers ProviderIcon.name
+  contextLength         Int?
+  maxCompletionTokens   Int?
+  pricing               Json?
+  isActive              Boolean       @default(true)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  providerIcon          ProviderIcon  @relation(fields: [providerName], references: [name])
+
+  @@index([isActive])
+  @@index([providerName])
+}
+
+// ===== SIMULATION DE TRADING =====
+
+enum SimulationStatus {
+  IDLE
+  RUNNING
+  COMPLETED
+}
+
+enum BotType {
+  CHEAP
+  PREMIUM
+  ALGO
+}
+
+enum TradeAction {
+  BUY
+  SELL
+  HOLD
+}
+
+model SimulationConfig {
+  id              String            @id @default(cuid())
+  symbol          String
+  startCapital    Float
+  cheapModelId    String
+  premiumModelId  String
+  useReddit       Boolean           @default(false)
+  status          SimulationStatus  @default(IDLE)
+  currentDay      Int               @default(0)
+  createdBy       String?           // Clerk userId (info only)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  snapshots       MarketSnapshot[]
+  portfolios      Portfolio[]
+  
+  @@index([status])
+}
+
+model MarketSnapshot {
+  id                String           @id @default(cuid())
+  simulationId      String
+  timestamp         DateTime         @default(now())
+  symbol            String
+  price             Float
+  sentimentScore    Float
+  sentimentReason   String           @db.Text
+  rsi               Float?
+  macd              Float?
+  redditHype        Float?
+  
+  simulation        SimulationConfig @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  decisions         BotDecision[]
+  
+  @@index([simulationId, timestamp])
+}
+
+model BotDecision {
+  id          String       @id @default(cuid())
+  snapshotId  String
+  botType     BotType
+  action      TradeAction
+  quantity    Float
+  price       Float
+  reason      String       @db.Text
+  confidence  Float?
+  algoConfig  Json?
+  createdAt   DateTime     @default(now())
+  
+  snapshot    MarketSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  
+  @@index([botType, createdAt])
+}
+
+model Portfolio {
+  id            String           @id @default(cuid())
+  simulationId  String
+  botType       BotType
+  cash          Float
+  shares        Float
+  avgBuyPrice   Float?
+  totalValue    Float
+  roi           Float
+  updatedAt     DateTime         @updatedAt
+  
+  simulation    SimulationConfig @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  
+  @@unique([simulationId, botType])
+}

@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/simulation-tick",
+      "schedule": "30 13 * * 1-5"
+    },
+    {
+      "path": "/api/cron/simulation-tick",
+      "schedule": "0 17 * * 1-5"
+    },
+    {
+      "path": "/api/cron/simulation-tick",
+      "schedule": "30 20 * * 1-5"
+    }
+  ]
+}
