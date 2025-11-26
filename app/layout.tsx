@@ -42,6 +42,12 @@ export default function RootLayout({
 
               {/* Navigation Droite */}
               <div className="flex items-center gap-4">
+                <Link 
+                  href="/simulation"
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-colors text-sm font-semibold"
+                >
+                  Simulation de Trading
+                </Link>
                 <SignedIn>
                   <Link 
                     href="/dashboard" 
