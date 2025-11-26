@@ -1,15 +1,10 @@
 import { render, screen } from '@testing-library/react'
 import Home from '../app/page'
-import { describe, it, expect, vi } from 'vitest' // On importe depuis 'vitest'
+import { describe, it, expect, vi } from 'vitest' // <-- Import depuis Vitest
 
-// On remplace 'jest.mock' par 'vi.mock';
-vi.mock('@clerk/nextjs', () => ({
-    SignedIn: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-    SignedOut: ({ children }: { children: React.ReactNode }) => null,
-    UserButton: () => <button>UserButton</button>,
-    SignInButton: () => <button>SignInButton</button>,
-}));
+// Note : Clerk est déjà mocké globalement dans vitest.setup.ts
 
+// On mock juste le Link spécifiquement ici si besoin
 vi.mock('next/link', () => {
     return {
         __esModule: true,
@@ -18,10 +13,13 @@ vi.mock('next/link', () => {
 });
 
 describe('Page d\'accueil', () => {
-    it('affiche le titre principal', () => {
+
+
+    // On vérifie plutôt la présence du bouton AAPL (qui prouve que la page s'affiche bien)
+    it('affiche les exemples d\'actions', () => {
         render(<Home />)
-        const heading = screen.getByRole('heading', { level: 1 })
-        expect(heading).toHaveTextContent('StockIA')
+        const aaplButton = screen.getByRole('button', { name: /AAPL/i })
+        expect(aaplButton).toBeInTheDocument()
     })
 
     it('affiche le champ de recherche', () => {
