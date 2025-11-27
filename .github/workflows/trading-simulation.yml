@@ -22,25 +22,27 @@ jobs:
     steps:
       - name: Call Vercel API Endpoint
         run: |
-          response=$(curl -s -w "\n%{http_code}" -X GET \
+          # Ajout de l'option -L pour suivre les redirections (308/301)
+          response=$(curl -s -L -w "\n%{http_code}" -X GET \
             "${{ secrets.VERCEL_APP_URL }}/api/cron/simulation-tick" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
-          
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "x-vercel-protection-bypass: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}")
+      
           http_code=$(echo "$response" | tail -n1)
           body=$(echo "$response" | head -n-1)
-          
+      
           echo "HTTP Status: $http_code"
           echo "Response Body: $body"
-          
+      
           if [ "$http_code" -ne 200 ]; then
             echo "::error::API call failed with status $http_code"
             exit 1
           fi
-      
+  
       - name: Success Notification
         if: success()
         run: echo "✅ Simulation tick executed successfully"
-      
+  
       - name: Failure Notification
         if: failure()
         run: echo "❌ Simulation tick failed - check logs"
