@@ -8,7 +8,15 @@ import * as algoAgent from '@/lib/simulation/agents/algo-agent';
 export async function GET(req: NextRequest) {
   // Auth
   const authHeader = req.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const headerKey = req.headers.get('x-cron-key');
+  const url = new URL(req.url);
+  const queryKey = url.searchParams.get('key');
+
+  const bearerOk = authHeader === `Bearer ${process.env.CRON_SECRET}`;
+  const headerKeyOk = headerKey === process.env.CRON_SECRET;
+  const queryKeyOk = queryKey === process.env.CRON_SECRET;
+
+  if (!bearerOk && !headerKeyOk && !queryKeyOk) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
