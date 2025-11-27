@@ -1,6 +1,14 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
-const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)', '/'])
+// Public routes do not require a Clerk session. Add API cron endpoint here so external
+// schedulers (GitHub Actions, Cron jobs) can call it using our own bearer secret.
+const isPublicRoute = createRouteMatcher([
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/',
+  // Allow the cron tick endpoint without Clerk auth. It performs its own Bearer check.
+  '/api/cron/simulation-tick(.*)'
+])
 
 export default clerkMiddleware(async (auth, request) => {
   if (!isPublicRoute(request)) {
