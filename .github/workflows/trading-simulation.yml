@@ -5,43 +5,44 @@ on:
     # Exécution 3 fois par jour, du lundi au vendredi (UTC)
     # 14h30 Paris (hiver UTC+1) = 13h30 UTC
     - cron: '30 13 * * 1-5'
-    
+
     # 18h00 Paris (hiver UTC+1) = 17h00 UTC
     - cron: '0 17 * * 1-5'
-    
+
     # 21h30 Paris (hiver UTC+1) = 20h30 UTC
     - cron: '30 20 * * 1-5'
-  
+
   # Permet de déclencher manuellement depuis GitHub Actions UI
   workflow_dispatch:
 
 jobs:
   trigger-simulation-tick:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Call Vercel API Endpoint
         run: |
           # Ajout de l'option -L pour suivre les redirections (308/301)
+          # CORRECTION ICI : Ajout de la parenthèse fermante manquante ')'
           response=$(curl -s -L -w "\n%{http_code}" -X GET \
             "${{ secrets.VERCEL_APP_URL }}/api/cron/simulation-tick" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           
           http_code=$(echo "$response" | tail -n1)
           body=$(echo "$response" | head -n-1)
-      
+          
           echo "HTTP Status: $http_code"
           echo "Response Body: $body"
-      
+          
           if [ "$http_code" -ne 200 ]; then
             echo "::error::API call failed with status $http_code"
             exit 1
           fi
-  
+
       - name: Success Notification
         if: success()
         run: echo "✅ Simulation tick executed successfully"
-  
+
       - name: Failure Notification
         if: failure()
         run: echo "❌ Simulation tick failed - check logs"
