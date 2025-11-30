@@ -82,7 +82,7 @@ export default function SimulationPage() {
 
   // Fetch models au mount
   useEffect(() => {
-    const cached = localStorage.getItem('openrouter_models_v1');
+    const cached = localStorage.getItem('openrouter_models_v2');
     if (cached) {
       const { data, timestamp } = JSON.parse(cached);
       if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
@@ -103,7 +103,7 @@ export default function SimulationPage() {
           setCheapModelId(data[0].id);
           setPremiumModelId(data[Math.min(1, data.length - 1)].id);
         }
-        localStorage.setItem('openrouter_models_v1', JSON.stringify({
+        localStorage.setItem('openrouter_models_v2', JSON.stringify({
           data,
           timestamp: Date.now()
         }));
