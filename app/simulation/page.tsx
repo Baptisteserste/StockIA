@@ -20,6 +20,8 @@ interface Model {
     prompt: number;
     completion: number;
   };
+  providerName?: string;
+  providerIcon?: string;
 }
 
 interface Portfolio {
@@ -229,7 +231,20 @@ export default function SimulationPage() {
                   <SelectContent>
                     {models.map(m => (
                       <SelectItem key={m.id} value={m.id}>
-                        {m.name} - ${(m.pricing.prompt * 1000000).toFixed(2)}/1M tokens
+                        <div className="flex items-center gap-2">
+                          {m.providerIcon && (
+                            <img 
+                              src={m.providerIcon} 
+                              alt={m.providerName || ''} 
+                              className="w-4 h-4 rounded-sm object-contain"
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                          )}
+                          <span>{m.name}</span>
+                          <span className="text-slate-400 text-xs">
+                            ${(m.pricing.prompt * 1000000).toFixed(2)}/1M
+                          </span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -247,7 +262,20 @@ export default function SimulationPage() {
                   <SelectContent>
                     {models.map(m => (
                       <SelectItem key={m.id} value={m.id}>
-                        {m.name} - ${(m.pricing.prompt * 1000000).toFixed(2)}/1M tokens
+                        <div className="flex items-center gap-2">
+                          {m.providerIcon && (
+                            <img 
+                              src={m.providerIcon} 
+                              alt={m.providerName || ''} 
+                              className="w-4 h-4 rounded-sm object-contain"
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                          )}
+                          <span>{m.name}</span>
+                          <span className="text-slate-400 text-xs">
+                            ${(m.pricing.prompt * 1000000).toFixed(2)}/1M
+                          </span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
