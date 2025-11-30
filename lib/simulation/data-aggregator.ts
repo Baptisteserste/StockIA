@@ -55,15 +55,28 @@ async function fetchFinnhubData(symbol: string) {
   const news = (Array.isArray(newsRaw) ? newsRaw : []).slice(0, 10);
 
   // Prix historiques 30 jours pour calculs techniques
-  const from30d = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
-  const toNow = Math.floor(Date.now() / 1000);
-  const candlesRes = await fetch(`${baseUrl}/stock/candle?symbol=${symbol}&resolution=D&from=${from30d}&to=${toNow}&token=${apiKey}`);
-  const candles = await candlesRes.json();
+  // Note: Cette API n'est PAS disponible sur le plan gratuit Finnhub
+  let candles = null;
+  try {
+    const from30d = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
+    const toNow = Math.floor(Date.now() / 1000);
+    const candlesRes = await fetch(`${baseUrl}/stock/candle?symbol=${symbol}&resolution=D&from=${from30d}&to=${toNow}&token=${apiKey}`);
+    const candlesData = await candlesRes.json();
+    
+    // Vérifier si on a accès (plan payant)
+    if (candlesData.s === 'ok' && candlesData.c) {
+      candles = candlesData;
+    } else if (candlesData.error) {
+      console.warn('Finnhub candles not available (free plan limitation):', candlesData.error);
+    }
+  } catch (error) {
+    console.warn('Finnhub candles fetch failed:', error);
+  }
 
   return {
     currentPrice: quote.c,
     news,
-    candles: candles.s === 'ok' ? candles : null
+    candles
   };
 }
 

@@ -72,11 +72,33 @@ Répondez en JSON strict:
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    
+    // Gérer les erreurs de l'API
+    if (data.error) {
+      console.error('OpenRouter error:', data.error);
+      throw new Error(data.error.message || 'OpenRouter API error');
+    }
+    
+    let content = data.choices?.[0]?.message?.content || '';
+    
+    // Certains modèles (reasoning) mettent le contenu dans reasoning
+    if (!content && data.choices?.[0]?.message?.reasoning) {
+      console.warn('Model returned reasoning instead of content, using fallback');
+      throw new Error('Model returned empty content');
+    }
+    
+    if (!content) {
+      console.error('Empty response from model:', JSON.stringify(data));
+      throw new Error('Empty response from model');
+    }
     
     // Extraire JSON du texte (peut contenir des backticks markdown)
     const jsonMatch = content.match(/\{[\s\S]*\}/);
-    const decision = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(content);
+    if (!jsonMatch) {
+      console.error('No JSON found in response:', content);
+      throw new Error('No JSON in response');
+    }
+    const decision = JSON.parse(jsonMatch[0]);
 
     // Valider la décision
     return {

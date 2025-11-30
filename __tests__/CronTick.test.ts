@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
 // Mocks
@@ -51,7 +51,10 @@ vi.mock('@/lib/simulation/data-aggregator', () => ({
     price: 100,
     timestamp: new Date(),
     sentimentScore: 0.1,
-    newsCount: 3,
+    sentimentReason: 'Test sentiment',
+    rsi: 50,
+    macd: 0.5,
+    redditHype: null
   })
 }))
 
@@ -78,6 +81,14 @@ beforeEach(() => {
   fetchMock.mockReset()
   process.env.CRON_SECRET = 'testsecret'
   process.env.FINNHUB_API_KEY = 'x'
+  
+  // Mock Date to always be a weekday (Wednesday)
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date('2025-11-26T14:00:00Z')) // Wednesday
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 describe('API /api/cron/simulation-tick', () => {
@@ -113,5 +124,18 @@ describe('API /api/cron/simulation-tick', () => {
     expect(res.status).toBe(200)
     const json = await res.json()
     expect(json.success).toBe(true)
+  })
+
+  it('skip le weekend', async () => {
+    // Set to Sunday
+    vi.setSystemTime(new Date('2025-11-30T14:00:00Z')) // Sunday
+    
+    const req = new NextRequest('http://localhost/api/cron/simulation-tick', {
+      headers: new Headers({ authorization: 'Bearer testsecret' })
+    })
+    const res = await GET(req)
+    const json = await res.json()
+    expect(json.skipped).toBe(true)
+    expect(json.reason).toBe('weekend')
   })
 })

@@ -6,7 +6,7 @@ import * as premiumAgent from '@/lib/simulation/agents/premium-agent';
 import * as algoAgent from '@/lib/simulation/agents/algo-agent';
 
 export async function GET(req: NextRequest) {
-  // Auth
+  // Auth - Support multiple methods
   const authHeader = req.headers.get('authorization');
   const headerKey = req.headers.get('x-cron-key');
   const url = new URL(req.url);
