@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ModelCombobox } from '@/components/ui/model-combobox';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -20,6 +21,7 @@ interface Model {
     prompt: number;
     completion: number;
   };
+  context_length?: number;
   providerName?: string;
   providerIcon?: string;
 }
@@ -257,62 +259,26 @@ export default function SimulationPage() {
                 <label className="block text-sm font-medium text-slate-300 mb-2">
                   Agent Cheap
                 </label>
-                <Select value={cheapModelId} onValueChange={setCheapModelId} disabled={loading}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {models.map(m => (
-                      <SelectItem key={m.id} value={m.id}>
-                        <div className="flex items-center gap-2">
-                          {m.providerIcon && (
-                            <img 
-                              src={m.providerIcon} 
-                              alt={m.providerName || ''} 
-                              className="w-4 h-4 rounded-sm object-contain"
-                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                            />
-                          )}
-                          <span>{m.name}</span>
-                          <span className="text-slate-400 text-xs">
-                            ${(m.pricing.prompt * 1000000).toFixed(2)}/1M
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ModelCombobox
+                  models={models}
+                  value={cheapModelId}
+                  onValueChange={setCheapModelId}
+                  disabled={loading}
+                  placeholder="Rechercher un modèle cheap..."
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
                   Agent Premium
                 </label>
-                <Select value={premiumModelId} onValueChange={setPremiumModelId} disabled={loading}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {models.map(m => (
-                      <SelectItem key={m.id} value={m.id}>
-                        <div className="flex items-center gap-2">
-                          {m.providerIcon && (
-                            <img 
-                              src={m.providerIcon} 
-                              alt={m.providerName || ''} 
-                              className="w-4 h-4 rounded-sm object-contain"
-                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                            />
-                          )}
-                          <span>{m.name}</span>
-                          <span className="text-slate-400 text-xs">
-                            ${(m.pricing.prompt * 1000000).toFixed(2)}/1M
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ModelCombobox
+                  models={models}
+                  value={premiumModelId}
+                  onValueChange={setPremiumModelId}
+                  disabled={loading}
+                  placeholder="Rechercher un modèle premium..."
+                />
               </div>
             </div>
 
