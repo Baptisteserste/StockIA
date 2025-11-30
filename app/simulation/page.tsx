@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Settings, Trophy } from 'lucide-react';
+import { TrendingUp, TrendingDown, Settings, Trophy, History } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -210,12 +210,21 @@ export default function SimulationPage() {
           <Link href="/" className="text-2xl font-bold text-white">
             Stock<span className="text-blue-500">IA</span>
           </Link>
-          <Link
-            href="/"
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-colors text-sm font-semibold text-white"
-          >
-            Retour à l'accueil
-          </Link>
+          <div className="flex gap-3">
+            <Link
+              href="/simulation/history"
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-colors text-sm font-semibold text-white flex items-center gap-2"
+            >
+              <History className="h-4 w-4" />
+              Historique
+            </Link>
+            <Link
+              href="/"
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-colors text-sm font-semibold text-white"
+            >
+              Accueil
+            </Link>
+          </div>
         </div>
       </header>
 

@@ -55,7 +55,35 @@ model MarketSnapshot {
   sentimentReason String
   rsi             Float?
   macd            Float?
+  macdSignal      Float?
+  macdHistogram   Float?
   redditHype      Float?
+  
+  // Stocktwits sentiment
+  stocktwitsBulls   Int?           // % bullish (0-100)
+  stocktwitsBears   Int?           // % bearish (0-100)
+  stocktwitsVolume  Int?           // Nombre de messages
+  
+  // Fear & Greed Index
+  fearGreedIndex    Int?           // 0-100
+  fearGreedLabel    String?        // "Extreme Fear", "Fear", "Neutral", "Greed", "Extreme Greed"
+  
+  // EMA (Exponential Moving Average)
+  ema9              Float?
+  ema21             Float?
+  ema50             Float?
+  emaTrend          String?        // "BULLISH", "BEARISH", "NEUTRAL"
+  
+  // Bollinger Bands
+  bollingerUpper    Float?
+  bollingerMiddle   Float?
+  bollingerLower    Float?
+  bollingerWidth    Float?         // Mesure de volatilité
+  
+  // ATR (Average True Range)
+  atr               Float?
+  atrPercent        Float?         // ATR en % du prix
+  
   decisions       BotDecision[]
   simulation      SimulationConfig @relation(fields: [simulationId], references: [id], onDelete: Cascade)
 
