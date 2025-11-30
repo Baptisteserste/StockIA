@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Settings } from 'lucide-react';
+import { TrendingUp, TrendingDown, Settings, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Slider } from '@/components/ui/slider';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 interface Model {
   id: string;
@@ -49,6 +49,7 @@ interface RoiDataPoint {
   CHEAP?: number;
   PREMIUM?: number;
   ALGO?: number;
+  BUYHOLD?: number;
 }
 
 interface SimulationData {
@@ -189,6 +190,15 @@ export default function SimulationPage() {
       default: return type;
     }
   };
+
+  const getLeader = () => {
+    if (!simulation?.portfolios.length) return null;
+    return simulation.portfolios.reduce((best, p) => 
+      p.roi > best.roi ? p : best
+    );
+  };
+
+  const leader = simulation ? getLeader() : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
@@ -379,9 +389,14 @@ export default function SimulationPage() {
             {/* Cartes Agents */}
             <div className="grid grid-cols-3 gap-6">
               {simulation.portfolios.map(portfolio => (
-                <Card key={portfolio.botType} className="bg-slate-900 border-slate-800">
+                <Card key={portfolio.botType} className={`bg-slate-900 border-slate-800 ${leader?.botType === portfolio.botType ? 'ring-2 ring-yellow-500' : ''}`}>
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <h3 className="font-semibold text-white">{getBotName(portfolio.botType)}</h3>
+                    <div className="flex items-center gap-2">
+                      {leader?.botType === portfolio.botType && (
+                        <Trophy className="h-5 w-5 text-yellow-500" />
+                      )}
+                      <h3 className="font-semibold text-white">{getBotName(portfolio.botType)}</h3>
+                    </div>
                     {portfolio.botType === 'ALGO' && (
                       <Popover>
                         <PopoverTrigger asChild>
@@ -451,9 +466,13 @@ export default function SimulationPage() {
                         labelStyle={{ color: '#fff' }}
                         formatter={(value: number) => [`${value.toFixed(2)}%`, '']}
                       />
+                      <Legend 
+                        wrapperStyle={{ paddingTop: '10px' }}
+                      />
                       <Line type="monotone" dataKey="CHEAP" stroke="#22c55e" name="Agent Cheap" strokeWidth={2} dot={false} />
                       <Line type="monotone" dataKey="PREMIUM" stroke="#3b82f6" name="Agent Premium" strokeWidth={2} dot={false} />
                       <Line type="monotone" dataKey="ALGO" stroke="#f59e0b" name="Algo Bot" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="BUYHOLD" stroke="#94a3b8" name="Buy & Hold" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (

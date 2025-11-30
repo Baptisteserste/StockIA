@@ -23,6 +23,9 @@ export async function GET() {
       return NextResponse.json({ active: false });
     }
 
+    // Prix initial pour calculer Buy & Hold
+    const initialPrice = simulation.snapshots[0]?.price || 1;
+
     // Construire l'historique de ROI pour le graphique
     const roiHistory = simulation.snapshots.map((snap, index) => {
       const dayData: Record<string, number> = {
@@ -34,6 +37,9 @@ export async function GET() {
         const value = p.cash + p.shares * snap.price;
         dayData[p.botType] = ((value / simulation.startCapital) - 1) * 100;
       });
+
+      // Buy & Hold: si on avait tout investi au jour 1
+      dayData.BUYHOLD = ((snap.price / initialPrice) - 1) * 100;
       
       return dayData;
     });
