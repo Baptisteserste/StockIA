@@ -33,6 +33,24 @@ interface Portfolio {
   roi: number;
 }
 
+interface Decision {
+  botType: string;
+  action: string;
+  quantity: number;
+  price: number;
+  reason: string;
+  confidence: number | null;
+  timestamp: string;
+}
+
+interface RoiDataPoint {
+  day: number;
+  price: number;
+  CHEAP?: number;
+  PREMIUM?: number;
+  ALGO?: number;
+}
+
 interface SimulationData {
   id: string;
   symbol: string;
@@ -40,6 +58,8 @@ interface SimulationData {
   currentDay: number;
   status: string;
   portfolios: Portfolio[];
+  roiHistory: RoiDataPoint[];
+  recentDecisions: Decision[];
 }
 
 export default function SimulationPage() {
@@ -393,27 +413,80 @@ export default function SimulationPage() {
               ))}
             </div>
 
-            {/* Graphique (placeholder) */}
+            {/* Graphique Performance */}
             <Card className="bg-slate-900 border-slate-800">
               <CardHeader>
                 <h3 className="font-semibold text-white">Performance comparative</h3>
               </CardHeader>
               <CardContent>
-                <div className="h-64 flex items-center justify-center text-slate-500">
-                  Graphique disponible après quelques jours de simulation
-                </div>
+                {simulation.roiHistory && simulation.roiHistory.length > 1 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={simulation.roiHistory}>
+                      <XAxis dataKey="day" stroke="#64748b" />
+                      <YAxis stroke="#64748b" tickFormatter={(v) => `${v.toFixed(1)}%`} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }}
+                        labelStyle={{ color: '#fff' }}
+                        formatter={(value: number) => [`${value.toFixed(2)}%`, '']}
+                      />
+                      <Line type="monotone" dataKey="CHEAP" stroke="#22c55e" name="Agent Cheap" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="PREMIUM" stroke="#3b82f6" name="Agent Premium" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="ALGO" stroke="#f59e0b" name="Algo Bot" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-64 flex items-center justify-center text-slate-500">
+                    Graphique disponible après le premier tick
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Logs */}
+            {/* Journal d'activité avec raisonnement */}
             <Card className="bg-slate-900 border-slate-800">
               <CardHeader>
                 <h3 className="font-semibold text-white">Journal d'activité</h3>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-96 bg-slate-950 border border-slate-800 rounded-xl p-4">
-                  <div className="font-mono text-xs text-slate-400 space-y-1">
-                    <div>En attente du prochain tick...</div>
+                  <div className="space-y-4">
+                    {simulation.recentDecisions && simulation.recentDecisions.length > 0 ? (
+                      simulation.recentDecisions.map((d, i) => (
+                        <div key={i} className="border-b border-slate-800 pb-3 last:border-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className={`font-semibold ${
+                              d.botType === 'CHEAP' ? 'text-green-400' : 
+                              d.botType === 'PREMIUM' ? 'text-blue-400' : 'text-amber-400'
+                            }`}>
+                              {getBotName(d.botType)}
+                            </span>
+                            <span className={`text-xs px-2 py-0.5 rounded ${
+                              d.action === 'BUY' ? 'bg-green-900 text-green-300' :
+                              d.action === 'SELL' ? 'bg-red-900 text-red-300' : 'bg-slate-700 text-slate-300'
+                            }`}>
+                              {d.action} {d.quantity > 0 && `${d.quantity.toFixed(2)} @ $${d.price.toFixed(2)}`}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-400">{d.reason}</p>
+                          {d.confidence && (
+                            <div className="mt-1 flex items-center gap-2">
+                              <div className="h-1 flex-1 bg-slate-700 rounded">
+                                <div 
+                                  className="h-1 bg-blue-500 rounded" 
+                                  style={{ width: `${d.confidence * 100}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-slate-500">{(d.confidence * 100).toFixed(0)}%</span>
+                            </div>
+                          )}
+                          <p className="text-xs text-slate-600 mt-1">
+                            {new Date(d.timestamp).toLocaleString('fr-FR')}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-slate-500 text-sm">En attente du prochain tick...</div>
+                    )}
                   </div>
                 </ScrollArea>
               </CardContent>
