@@ -174,9 +174,6 @@ export async function GET() {
     // Filtrer et mapper les modèles
     const models: Model[] = data.data
       .filter((m: any) => {
-        // Exclure les modèles gratuits (marqués :free)
-        if (m.id.includes(':free')) return false;
-        
         // Exclure les modèles avec pricing invalide (négatif ou undefined)
         const promptPrice = parseFloat(m.pricing?.prompt);
         if (isNaN(promptPrice) || promptPrice < 0) return false;
