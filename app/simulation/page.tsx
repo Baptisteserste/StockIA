@@ -56,6 +56,7 @@ interface SimulationData {
   symbol: string;
   startCapital: number;
   currentDay: number;
+  durationDays: number;
   status: string;
   portfolios: Portfolio[];
   roiHistory: RoiDataPoint[];
@@ -70,6 +71,7 @@ export default function SimulationPage() {
   // Form state
   const [symbol, setSymbol] = useState('NVDA');
   const [capital, setCapital] = useState('10000');
+  const [durationDays, setDurationDays] = useState('21');
   const [cheapModelId, setCheapModelId] = useState('');
   const [premiumModelId, setPremiumModelId] = useState('');
   const [useReddit, setUseReddit] = useState(false);
@@ -138,6 +140,7 @@ export default function SimulationPage() {
         body: JSON.stringify({
           symbol: symbol.toUpperCase(),
           startCapital: parseFloat(capital),
+          durationDays: parseInt(durationDays),
           cheapModelId,
           premiumModelId,
           useReddit
@@ -303,19 +306,38 @@ export default function SimulationPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Capital initial ($)
-              </label>
-              <Input
-                type="number"
-                min="1000"
-                value={capital}
-                onChange={(e) => setCapital(e.target.value)}
-                placeholder="10000"
-                className="bg-slate-800 border-slate-700 text-white"
-                disabled={loading}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Capital initial ($)
+                </label>
+                <Input
+                  type="number"
+                  min="1000"
+                  value={capital}
+                  onChange={(e) => setCapital(e.target.value)}
+                  placeholder="10000"
+                  className="bg-slate-800 border-slate-700 text-white"
+                  disabled={loading}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Durée (jours)
+                </label>
+                <Select value={durationDays} onValueChange={setDurationDays} disabled={loading}>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">7 jours</SelectItem>
+                    <SelectItem value="14">14 jours</SelectItem>
+                    <SelectItem value="21">21 jours</SelectItem>
+                    <SelectItem value="30">30 jours</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="flex items-center gap-3">
@@ -343,7 +365,7 @@ export default function SimulationPage() {
                 <h2 className="text-2xl font-bold text-white">
                   Simulation {simulation.symbol}
                 </h2>
-                <p className="text-slate-400">Jour {simulation.currentDay} / 21</p>
+                <p className="text-slate-400">Jour {simulation.currentDay} / {simulation.durationDays || 21}</p>
               </div>
               <Button
                 onClick={handleStopSimulation}

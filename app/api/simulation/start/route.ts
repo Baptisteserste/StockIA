@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const { userId } = await auth();
 
     const body = await req.json();
-    const { symbol, startCapital, cheapModelId, premiumModelId, useReddit } = body;
+    const { symbol, startCapital, durationDays, cheapModelId, premiumModelId, useReddit } = body;
 
     // Validation
     if (!symbol || !startCapital || !cheapModelId || !premiumModelId) {
@@ -21,6 +21,15 @@ export async function POST(req: NextRequest) {
     if (startCapital < 1000) {
       return NextResponse.json(
         { error: 'Le capital doit être d\'au moins 1000$' },
+        { status: 400 }
+      );
+    }
+
+    // Valider la durée
+    const duration = durationDays || 21;
+    if (duration < 7 || duration > 30) {
+      return NextResponse.json(
+        { error: 'La durée doit être entre 7 et 30 jours' },
         { status: 400 }
       );
     }
@@ -62,6 +71,7 @@ export async function POST(req: NextRequest) {
       data: {
         symbol: symbol.toUpperCase(),
         startCapital,
+        durationDays: duration,
         cheapModelId,
         premiumModelId,
         useReddit: useReddit || false,

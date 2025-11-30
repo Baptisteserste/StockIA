@@ -59,6 +59,7 @@ export async function GET() {
         symbol: simulation.symbol,
         startCapital: simulation.startCapital,
         currentDay: simulation.currentDay,
+        durationDays: simulation.durationDays,
         status: simulation.status,
         useReddit: simulation.useReddit,
         portfolios: simulation.portfolios.map(p => ({
