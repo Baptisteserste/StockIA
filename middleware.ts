@@ -7,7 +7,11 @@ const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
   '/',
   // Allow the cron tick endpoint without Clerk auth. It performs its own Bearer check.
-  '/api/cron/simulation-tick(.*)'
+  '/api/cron/simulation-tick(.*)',
+  // Allow the openrouter models endpoint (read-only, for UI)
+  '/api/openrouter/models(.*)',
+  // Public simulation page
+  '/simulation(.*)'
 ])
 
 export default clerkMiddleware(async (auth, request) => {
