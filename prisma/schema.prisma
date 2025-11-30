@@ -33,6 +33,7 @@ model SimulationConfig {
   cheapModelId   String
   premiumModelId String
   useReddit      Boolean          @default(false)
+  durationDays   Int              @default(21)
   status         SimulationStatus @default(IDLE)
   currentDay     Int              @default(0)
   createdBy      String?

@@ -179,7 +179,8 @@ export async function GET(req: NextRequest) {
 
     // Incrémenter le jour
     const newDay = config.currentDay + 1;
-    const newStatus = newDay >= 21 ? 'COMPLETED' : 'RUNNING';
+    const maxDays = config.durationDays || 21;
+    const newStatus = newDay >= maxDays ? 'COMPLETED' : 'RUNNING';
 
     await prisma.simulationConfig.update({
       where: { id: config.id },
