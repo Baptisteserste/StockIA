@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
-    // Récupérer la simulation active
+    // Récupérer la simulation active avec historique complet
     const simulation = await prisma.simulationConfig.findFirst({
       where: { status: 'RUNNING' },
       include: {
@@ -11,12 +11,9 @@ export async function GET() {
           orderBy: { botType: 'asc' }
         },
         snapshots: {
-          orderBy: { timestamp: 'desc' },
-          take: 1,
+          orderBy: { timestamp: 'asc' },
           include: {
-            decisions: {
-              orderBy: { createdAt: 'desc' }
-            }
+            decisions: true
           }
         }
       }
@@ -26,7 +23,35 @@ export async function GET() {
       return NextResponse.json({ active: false });
     }
 
-    // Formater la réponse
+    // Construire l'historique de ROI pour le graphique
+    const roiHistory = simulation.snapshots.map((snap, index) => {
+      const dayData: Record<string, number> = {
+        day: index + 1,
+        price: snap.price
+      };
+      
+      simulation.portfolios.forEach(p => {
+        const value = p.cash + p.shares * snap.price;
+        dayData[p.botType] = ((value / simulation.startCapital) - 1) * 100;
+      });
+      
+      return dayData;
+    });
+
+    // Récupérer les décisions récentes avec raisonnement
+    const recentDecisions = await prisma.botDecision.findMany({
+      where: {
+        snapshot: { simulationId: simulation.id }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+      include: {
+        snapshot: {
+          select: { timestamp: true, price: true }
+        }
+      }
+    });
+
     return NextResponse.json({
       active: true,
       simulation: {
@@ -44,7 +69,16 @@ export async function GET() {
           totalValue: p.totalValue,
           roi: p.roi
         })),
-        latestSnapshot: simulation.snapshots[0] || null
+        roiHistory,
+        recentDecisions: recentDecisions.map(d => ({
+          botType: d.botType,
+          action: d.action,
+          quantity: d.quantity,
+          price: d.price,
+          reason: d.reason,
+          confidence: d.confidence,
+          timestamp: d.snapshot.timestamp
+        }))
       }
     });
 
