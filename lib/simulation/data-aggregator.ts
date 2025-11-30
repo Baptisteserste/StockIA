@@ -2,6 +2,9 @@ import prisma from '@/lib/prisma';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { RSI, MACD } from 'technicalindicators';
 import Snoowrap from 'snoowrap';
+import { fetchStocktwitsSentiment } from './data/stocktwits';
+import { fetchFearGreedIndex } from './data/fear-greed';
+import { calculateTechnicalIndicators as calcTechIndicators, TechnicalIndicators, PriceData } from './data/technical-indicators';
 
 interface MarketSnapshotData {
   simulationId: string;
@@ -11,7 +14,29 @@ interface MarketSnapshotData {
   sentimentReason: string;
   rsi: number | null;
   macd: number | null;
+  macdSignal: number | null;
+  macdHistogram: number | null;
   redditHype: number | null;
+  // Stocktwits
+  stocktwitsBulls: number | null;
+  stocktwitsBears: number | null;
+  stocktwitsVolume: number | null;
+  // Fear & Greed
+  fearGreedIndex: number | null;
+  fearGreedLabel: string | null;
+  // EMA
+  ema9: number | null;
+  ema21: number | null;
+  ema50: number | null;
+  emaTrend: string | null;
+  // Bollinger
+  bollingerUpper: number | null;
+  bollingerMiddle: number | null;
+  bollingerLower: number | null;
+  bollingerWidth: number | null;
+  // ATR
+  atr: number | null;
+  atrPercent: number | null;
 }
 
 async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
@@ -195,37 +220,84 @@ export async function createMarketSnapshot(
   console.log(`Creating market snapshot for ${symbol}...`);
 
   // Fetch toutes les données en parallèle
-  const [finnhubData, redditHype] = await Promise.all([
+  const [finnhubData, redditHype, stocktwitsData, fearGreedData] = await Promise.all([
     fetchFinnhubData(symbol),
-    useReddit ? fetchWithFallback(() => scrapeRedditHype(symbol), null) : Promise.resolve(null)
+    useReddit ? fetchWithFallback(() => scrapeRedditHype(symbol), null) : Promise.resolve(null),
+    fetchWithFallback(() => fetchStocktwitsSentiment(symbol), null),
+    fetchWithFallback(() => fetchFearGreedIndex(), null)
   ]);
 
-  // Calculer indicateurs techniques
-  const { rsi, macd } = await calculateTechnicalIndicators(finnhubData.candles);
+  // Calculer indicateurs techniques basiques (rétrocompatibilité)
+  const basicIndicators = await calculateTechnicalIndicators(finnhubData.candles);
+
+  // Calculer indicateurs avancés si on a les candles
+  let advancedIndicators: TechnicalIndicators | null = null;
+  if (finnhubData.candles?.c && finnhubData.candles.c.length >= 30) {
+    const priceData: PriceData = {
+      close: finnhubData.candles.c,
+      high: finnhubData.candles.h,
+      low: finnhubData.candles.l
+    };
+    advancedIndicators = calcTechIndicators(priceData, finnhubData.currentPrice);
+  }
 
   // Analyser sentiment des news
   const sentiment = await analyzeSentimentWithGemini(symbol, finnhubData.news);
 
-  // Préparer les données
-  const snapshotData = {
+  // Préparer les données complètes
+  const snapshotData: MarketSnapshotData = {
     simulationId,
     symbol,
     price: finnhubData.currentPrice,
     sentimentScore: sentiment.score,
     sentimentReason: sentiment.reason,
-    rsi: rsi ?? null,
-    macd: macd ?? null,
-    redditHype
+    
+    // Indicateurs techniques
+    rsi: advancedIndicators?.rsi ?? basicIndicators.rsi ?? null,
+    macd: advancedIndicators?.macd ?? basicIndicators.macd ?? null,
+    macdSignal: advancedIndicators?.macdSignal ?? null,
+    macdHistogram: advancedIndicators?.macdHistogram ?? null,
+    
+    // Reddit
+    redditHype,
+    
+    // Stocktwits
+    stocktwitsBulls: stocktwitsData?.bullish ?? null,
+    stocktwitsBears: stocktwitsData?.bearish ?? null,
+    stocktwitsVolume: stocktwitsData?.volume ?? null,
+    
+    // Fear & Greed
+    fearGreedIndex: fearGreedData?.value ?? null,
+    fearGreedLabel: fearGreedData?.label ?? null,
+    
+    // EMA
+    ema9: advancedIndicators?.ema9 ?? null,
+    ema21: advancedIndicators?.ema21 ?? null,
+    ema50: advancedIndicators?.ema50 ?? null,
+    emaTrend: advancedIndicators?.emaTrend ?? null,
+    
+    // Bollinger
+    bollingerUpper: advancedIndicators?.bollingerUpper ?? null,
+    bollingerMiddle: advancedIndicators?.bollingerMiddle ?? null,
+    bollingerLower: advancedIndicators?.bollingerLower ?? null,
+    bollingerWidth: advancedIndicators?.bollingerWidth ?? null,
+    
+    // ATR
+    atr: advancedIndicators?.atr ?? null,
+    atrPercent: advancedIndicators?.atrPercent ?? null
   };
 
   // Insérer en base avec retry
-  const snapshot = await withRetry(() =>
+  await withRetry(() =>
     prisma.marketSnapshot.create({
       data: snapshotData
     })
   );
 
-  console.log(`Market snapshot created successfully for ${symbol} at $${finnhubData.currentPrice}`);
+  console.log(`Market snapshot created for ${symbol} at $${finnhubData.currentPrice}`);
+  console.log(`  - Stocktwits: ${stocktwitsData?.bullish ?? 'N/A'}% bulls`);
+  console.log(`  - Fear & Greed: ${fearGreedData?.value ?? 'N/A'} (${fearGreedData?.label ?? 'N/A'})`);
+  console.log(`  - EMA Trend: ${advancedIndicators?.emaTrend ?? 'N/A'}`);
 
   return snapshotData;
 }

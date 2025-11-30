@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
       Promise.resolve(algoAgent.decide(
         snapshot,
         algoPortfolio,
-        { weightTechnical: 60, weightSentiment: 40 }
+        `algo-${config.id}` // Agent ID unique par simulation pour le state
       ))
     ]);
 
