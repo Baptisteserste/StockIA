@@ -127,15 +127,15 @@ async function fetchFinnhubData(symbol: string) {
 
       if (result && result.quotes && result.quotes.length >= 30) {
         // Convertir format Yahoo vers format Finnhub pour compatibilité
-        const quotes = result.quotes.filter(q => q.close !== null); // Filtrer jours sans trade
+        const quotes = result.quotes.filter((q: any) => q.close !== null); // Filtrer jours sans trade
 
         candles = {
-          c: quotes.map(q => q.close),
-          h: quotes.map(q => q.high),
-          l: quotes.map(q => q.low),
-          o: quotes.map(q => q.open),
-          v: quotes.map(q => q.volume),
-          t: quotes.map(q => q.date.getTime() / 1000),
+          c: quotes.map((q: any) => q.close),
+          h: quotes.map((q: any) => q.high),
+          l: quotes.map((q: any) => q.low),
+          o: quotes.map((q: any) => q.open),
+          v: quotes.map((q: any) => q.volume),
+          t: quotes.map((q: any) => q.date.getTime() / 1000),
           s: 'ok'
         };
         console.log(`Successfully fetched ${candles.c.length} candles from Yahoo Finance`);
