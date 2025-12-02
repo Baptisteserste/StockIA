@@ -25,7 +25,7 @@ export async function decide(
   portfolio: Portfolio,
   modelId: string
 ): Promise<DecisionResult> {
-  const context = snapshot.simulationId 
+  const context = snapshot.simulationId
     ? await getBotContext(snapshot.simulationId, 'PREMIUM', 3)
     : "Première décision de trading.";
 
@@ -47,6 +47,7 @@ Votre portefeuille:
 Règles:
 - LONG-ONLY: Ne vendez que si vous possédez des actions (shares > 0)
 - Analysez les indicateurs techniques et le sentiment pour prendre une décision éclairée
+- Si certains indicateurs sont "N/A", basez-vous sur les autres données disponibles (Prix, Sentiment, etc.)
 - Décidez intelligemment entre BUY, SELL ou HOLD
 
 Répondez en JSON strict:
@@ -72,33 +73,40 @@ Répondez en JSON strict:
     }
 
     const data = await response.json();
-    
+
     // Gérer les erreurs de l'API
     if (data.error) {
       console.error('OpenRouter error:', data.error);
       throw new Error(data.error.message || 'OpenRouter API error');
     }
-    
+
     let content = data.choices?.[0]?.message?.content || '';
-    
+
     // Certains modèles (reasoning) mettent le contenu dans reasoning
     if (!content && data.choices?.[0]?.message?.reasoning) {
       console.warn('Model returned reasoning instead of content, using fallback');
       throw new Error('Model returned empty content');
     }
-    
+
     if (!content) {
       console.error('Empty response from model:', JSON.stringify(data));
       throw new Error('Empty response from model');
     }
-    
+
     // Extraire JSON du texte (peut contenir des backticks markdown)
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       console.error('No JSON found in response:', content);
       throw new Error('No JSON in response');
     }
-    const decision = JSON.parse(jsonMatch[0]);
+
+    let decision;
+    try {
+      decision = JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      console.error('Failed to parse JSON:', jsonMatch[0]);
+      throw new Error('Invalid JSON format');
+    }
 
     // Valider la décision
     return {
@@ -107,12 +115,14 @@ Répondez en JSON strict:
       reason: decision.reason || 'Décision de l\'IA',
       confidence: Math.min(1, Math.max(0, decision.confidence || 0.5))
     };
-  } catch (error) {
-    console.error('Premium agent decision failed:', error);
+  } catch (error: any) {
+    console.error('Premium agent decision failed:', error.message);
+    if (error.cause) console.error('Cause:', error.cause);
+
     return {
       action: 'HOLD',
       quantity: 0,
-      reason: 'Erreur lors de la prise de décision',
+      reason: `Erreur lors de la prise de décision: ${error.message}`,
       confidence: 0
     };
   }

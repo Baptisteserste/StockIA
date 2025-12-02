@@ -60,6 +60,8 @@ async function fetchWithFallback<T>(fn: () => Promise<T>, fallback: T): Promise<
   }
 }
 
+import yahooFinance from 'yahoo-finance2';
+
 async function fetchFinnhubData(symbol: string) {
   const apiKey = process.env.FINNHUB_API_KEY;
   const baseUrl = 'https://finnhub.io/api/v1';
@@ -67,7 +69,7 @@ async function fetchFinnhubData(symbol: string) {
   // Prix actuel
   const quoteRes = await fetch(`${baseUrl}/quote?symbol=${symbol}&token=${apiKey}`);
   const quote = await quoteRes.json();
-  
+
   if (!quote.c) {
     throw new Error(`Invalid symbol or no data available for ${symbol}`);
   }
@@ -80,22 +82,67 @@ async function fetchFinnhubData(symbol: string) {
   const news = (Array.isArray(newsRaw) ? newsRaw : []).slice(0, 10);
 
   // Prix historiques 30 jours pour calculs techniques
-  // Note: Cette API n'est PAS disponible sur le plan gratuit Finnhub
+  // Stratégie : Tenter Finnhub (payant), fallback sur Yahoo Finance (gratuit)
   let candles = null;
+
+  // 1. Essai Finnhub
   try {
-    const from30d = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
+    const from30d = Math.floor((Date.now() - 45 * 24 * 60 * 60 * 1000) / 1000); // 45 jours pour être sûr d'avoir 30 candles
     const toNow = Math.floor(Date.now() / 1000);
     const candlesRes = await fetch(`${baseUrl}/stock/candle?symbol=${symbol}&resolution=D&from=${from30d}&to=${toNow}&token=${apiKey}`);
     const candlesData = await candlesRes.json();
-    
-    // Vérifier si on a accès (plan payant)
-    if (candlesData.s === 'ok' && candlesData.c) {
+
+    if (candlesData.s === 'ok' && candlesData.c && candlesData.c.length >= 30) {
       candles = candlesData;
     } else if (candlesData.error) {
       console.warn('Finnhub candles not available (free plan limitation):', candlesData.error);
     }
   } catch (error) {
     console.warn('Finnhub candles fetch failed:', error);
+  }
+
+  // 2. Fallback Yahoo Finance si pas de candles Finnhub
+  if (!candles) {
+    try {
+      console.log(`Fetching historical data for ${symbol} from Yahoo Finance...`);
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 60); // 60 jours de marge
+
+      const queryOptions = { period1: startDate, period2: endDate, interval: '1d' as const };
+
+      // Fix for "Call const yahooFinance = new YahooFinance() first"
+      let yf: any = yahooFinance;
+      if (typeof yf === 'function' || typeof yf?.chart !== 'function') {
+        try {
+          yf = new (yf as any)();
+        } catch (e) {
+          if (yf.YahooFinance) {
+            yf = new yf.YahooFinance();
+          }
+        }
+      }
+
+      const result = await yf.chart(symbol, queryOptions);
+
+      if (result && result.quotes && result.quotes.length >= 30) {
+        // Convertir format Yahoo vers format Finnhub pour compatibilité
+        const quotes = result.quotes.filter(q => q.close !== null); // Filtrer jours sans trade
+
+        candles = {
+          c: quotes.map(q => q.close),
+          h: quotes.map(q => q.high),
+          l: quotes.map(q => q.low),
+          o: quotes.map(q => q.open),
+          v: quotes.map(q => q.volume),
+          t: quotes.map(q => q.date.getTime() / 1000),
+          s: 'ok'
+        };
+        console.log(`Successfully fetched ${candles.c.length} candles from Yahoo Finance`);
+      }
+    } catch (error) {
+      console.error('Yahoo Finance fetch failed:', error);
+    }
   }
 
   return {
@@ -156,13 +203,13 @@ ${headlines}`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
-    
+
     // Extraire JSON du texte (peut contenir des backticks markdown)
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
     }
-    
+
     return JSON.parse(text);
   } catch (error) {
     console.error('Gemini sentiment analysis failed:', error);
@@ -251,37 +298,37 @@ export async function createMarketSnapshot(
     price: finnhubData.currentPrice,
     sentimentScore: sentiment.score,
     sentimentReason: sentiment.reason,
-    
+
     // Indicateurs techniques
     rsi: advancedIndicators?.rsi ?? basicIndicators.rsi ?? null,
     macd: advancedIndicators?.macd ?? basicIndicators.macd ?? null,
     macdSignal: advancedIndicators?.macdSignal ?? null,
     macdHistogram: advancedIndicators?.macdHistogram ?? null,
-    
+
     // Reddit
     redditHype,
-    
+
     // Stocktwits
     stocktwitsBulls: stocktwitsData?.bullish ?? null,
     stocktwitsBears: stocktwitsData?.bearish ?? null,
     stocktwitsVolume: stocktwitsData?.volume ?? null,
-    
+
     // Fear & Greed
     fearGreedIndex: fearGreedData?.value ?? null,
     fearGreedLabel: fearGreedData?.label ?? null,
-    
+
     // EMA
     ema9: advancedIndicators?.ema9 ?? null,
     ema21: advancedIndicators?.ema21 ?? null,
     ema50: advancedIndicators?.ema50 ?? null,
     emaTrend: advancedIndicators?.emaTrend ?? null,
-    
+
     // Bollinger
     bollingerUpper: advancedIndicators?.bollingerUpper ?? null,
     bollingerMiddle: advancedIndicators?.bollingerMiddle ?? null,
     bollingerLower: advancedIndicators?.bollingerLower ?? null,
     bollingerWidth: advancedIndicators?.bollingerWidth ?? null,
-    
+
     // ATR
     atr: advancedIndicators?.atr ?? null,
     atrPercent: advancedIndicators?.atrPercent ?? null
