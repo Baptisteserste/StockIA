@@ -1,56 +1,126 @@
-﻿2025-12-02T13:53:25.0913535Z Current runner version: '2.329.0'
-2025-12-02T13:53:25.0937143Z ##[group]Runner Image Provisioner
-2025-12-02T13:53:25.0938006Z Hosted Compute Agent
-2025-12-02T13:53:25.0938597Z Version: 20251016.436
-2025-12-02T13:53:25.0939218Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
-2025-12-02T13:53:25.0939921Z Build Date: 2025-10-15T20:44:12Z
-2025-12-02T13:53:25.0940537Z ##[endgroup]
-2025-12-02T13:53:25.0941082Z ##[group]Operating System
-2025-12-02T13:53:25.0941982Z Ubuntu
-2025-12-02T13:53:25.0942469Z 24.04.3
-2025-12-02T13:53:25.0942927Z LTS
-2025-12-02T13:53:25.0943377Z ##[endgroup]
-2025-12-02T13:53:25.0943929Z ##[group]Runner Image
-2025-12-02T13:53:25.0944477Z Image: ubuntu-24.04
-2025-12-02T13:53:25.0945033Z Version: 20251112.124.1
-2025-12-02T13:53:25.0946017Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251112.124/images/ubuntu/Ubuntu2404-Readme.md
-2025-12-02T13:53:25.0947580Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251112.124
-2025-12-02T13:53:25.0948572Z ##[endgroup]
-2025-12-02T13:53:25.0949649Z ##[group]GITHUB_TOKEN Permissions
-2025-12-02T13:53:25.0951622Z Contents: read
-2025-12-02T13:53:25.0952177Z Metadata: read
-2025-12-02T13:53:25.0952784Z Packages: read
-2025-12-02T13:53:25.0953291Z ##[endgroup]
-2025-12-02T13:53:25.0955585Z Secret source: Actions
-2025-12-02T13:53:25.0956563Z Prepare workflow directory
-2025-12-02T13:53:25.1269161Z Prepare all required actions
-2025-12-02T13:53:25.1375085Z Complete job name: trigger-simulation-tick
-2025-12-02T13:53:25.2101491Z ##[group]Run if [ -z "$VERCEL_APP_URL" ] || [ -z "$CRON_SECRET" ]; then
-2025-12-02T13:53:25.2102592Z [36;1mif [ -z "$VERCEL_APP_URL" ] || [ -z "$CRON_SECRET" ]; then[0m
-2025-12-02T13:53:25.2103561Z [36;1m  echo "::error::VERCEL_APP_URL ou CRON_SECRET non défini dans les secrets GitHub"[0m
-2025-12-02T13:53:25.2104377Z [36;1m  exit 1[0m
-2025-12-02T13:53:25.2104863Z [36;1mfi[0m
-2025-12-02T13:53:25.2105500Z [36;1mresponse=$(curl -s -L -w "\n%{http_code}" -X GET \[0m
-2025-12-02T13:53:25.2106427Z [36;1m  "$VERCEL_APP_URL/api/cron/simulation-tick" \[0m
-2025-12-02T13:53:25.2107353Z [36;1m  -H "Authorization: ***")[0m
-2025-12-02T13:53:25.2108003Z [36;1mhttp_code=$(echo "$response" | tail -n1)[0m
-2025-12-02T13:53:25.2108851Z [36;1mbody=$(echo "$response" | head -n-1)[0m
-2025-12-02T13:53:25.2109560Z [36;1mecho "HTTP Status: $http_code"[0m
-2025-12-02T13:53:25.2110212Z [36;1mecho "Response Body: $body"[0m
-2025-12-02T13:53:25.2110941Z [36;1mif [ "$http_code" -ne 200 ]; then[0m
-2025-12-02T13:53:25.2111854Z [36;1m  echo "::error::API call failed with status $http_code"[0m
-2025-12-02T13:53:25.2112516Z [36;1m  exit 1[0m
-2025-12-02T13:53:25.2113050Z [36;1mfi[0m
-2025-12-02T13:53:25.2778136Z shell: /usr/bin/bash -e {0}
-2025-12-02T13:53:25.2779198Z env:
-2025-12-02T13:53:25.2780103Z   VERCEL_APP_URL: ***
-2025-12-02T13:53:25.2781053Z   CRON_SECRET: ***
-2025-12-02T13:53:25.2781854Z ##[endgroup]
-2025-12-02T13:53:41.8439621Z HTTP Status: 200
-2025-12-02T13:53:41.8530344Z Response Body: {"success":true,"day":4,"status":"RUNNING","decisions":[{"botType":"CHEAP","action":"HOLD","quantity":0,"reason":"RSI neutre (43.89), MACD baissier (-2.65), sentiment incertain – signaux non bullish, prudence maintenue"},{"botType":"PREMIUM","action":"HOLD","quantity":0,"reason":"Erreur lors de la prise de décision: No JSON in response"},{"botType":"ALGO","action":"HOLD","quantity":0,"reason":"⏳ Attente signal | Score: 0.18"}]}
-2025-12-02T13:53:41.8696974Z ##[group]Run echo "✅ Simulation tick executed successfully"
-2025-12-02T13:53:41.8697833Z [36;1mecho "✅ Simulation tick executed successfully"[0m
-2025-12-02T13:53:41.8741727Z shell: /usr/bin/bash -e {0}
-2025-12-02T13:53:41.8742025Z ##[endgroup]
-2025-12-02T13:53:41.8794459Z ✅ Simulation tick executed successfully
-2025-12-02T13:53:41.8845238Z Cleaning up orphan processes
+﻿2025-12-02T14:34:14.3400108Z ##[debug]Starting: trigger-simulation-tick
+2025-12-02T14:34:14.3432864Z ##[debug]Cleaning runner temp folder: /home/runner/work/_temp
+2025-12-02T14:34:14.3588765Z ##[debug]Starting: Set up job
+2025-12-02T14:34:14.3590480Z Current runner version: '2.329.0'
+2025-12-02T14:34:14.3619172Z ##[group]Runner Image Provisioner
+2025-12-02T14:34:14.3620411Z Hosted Compute Agent
+2025-12-02T14:34:14.3621293Z Version: 20251016.436
+2025-12-02T14:34:14.3622400Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
+2025-12-02T14:34:14.3623758Z Build Date: 2025-10-15T20:44:12Z
+2025-12-02T14:34:14.3624732Z ##[endgroup]
+2025-12-02T14:34:14.3625629Z ##[group]Operating System
+2025-12-02T14:34:14.3626655Z Ubuntu
+2025-12-02T14:34:14.3627364Z 24.04.3
+2025-12-02T14:34:14.3628480Z LTS
+2025-12-02T14:34:14.3629346Z ##[endgroup]
+2025-12-02T14:34:14.3630086Z ##[group]Runner Image
+2025-12-02T14:34:14.3630977Z Image: ubuntu-24.04
+2025-12-02T14:34:14.3631940Z Version: 20251112.124.1
+2025-12-02T14:34:14.3633660Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251112.124/images/ubuntu/Ubuntu2404-Readme.md
+2025-12-02T14:34:14.3636528Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251112.124
+2025-12-02T14:34:14.3638453Z ##[endgroup]
+2025-12-02T14:34:14.3640270Z ##[group]GITHUB_TOKEN Permissions
+2025-12-02T14:34:14.3642865Z Contents: read
+2025-12-02T14:34:14.3643810Z Metadata: read
+2025-12-02T14:34:14.3644723Z Packages: read
+2025-12-02T14:34:14.3645723Z ##[endgroup]
+2025-12-02T14:34:14.3649287Z Secret source: Actions
+2025-12-02T14:34:14.3650732Z ##[debug]Primary repository: Baptisteserste/StockIA
+2025-12-02T14:34:14.3652177Z Prepare workflow directory
+2025-12-02T14:34:14.3745419Z ##[debug]Creating pipeline directory: '/home/runner/work/StockIA'
+2025-12-02T14:34:14.3751085Z ##[debug]Creating workspace directory: '/home/runner/work/StockIA/StockIA'
+2025-12-02T14:34:14.3753754Z ##[debug]Update context data
+2025-12-02T14:34:14.3759660Z ##[debug]Evaluating job-level environment variables
+2025-12-02T14:34:14.4087067Z ##[debug]Evaluating job container
+2025-12-02T14:34:14.4091957Z ##[debug]Evaluating job service containers
+2025-12-02T14:34:14.4095478Z ##[debug]Evaluating job defaults
+2025-12-02T14:34:14.4131859Z Prepare all required actions
+2025-12-02T14:34:14.4270051Z ##[debug]Set step '__run' display name to: 'Call /api/cron/simulation-tick'
+2025-12-02T14:34:14.4275672Z ##[debug]Set step '__run_2' display name to: 'Success Notification'
+2025-12-02T14:34:14.4279332Z ##[debug]Set step '__run_3' display name to: 'Failure Notification'
+2025-12-02T14:34:14.4280863Z Complete job name: trigger-simulation-tick
+2025-12-02T14:34:14.4313010Z ##[debug]Collect running processes for tracking orphan processes.
+2025-12-02T14:34:14.4652842Z ##[debug]Finishing: Set up job
+2025-12-02T14:34:14.4903198Z ##[debug]Evaluating: secrets.VERCEL_APP_URL
+2025-12-02T14:34:14.4909037Z ##[debug]Evaluating Index:
+2025-12-02T14:34:14.4911834Z ##[debug]..Evaluating secrets:
+2025-12-02T14:34:14.4922415Z ##[debug]..=> Object
+2025-12-02T14:34:14.4931979Z ##[debug]..Evaluating String:
+2025-12-02T14:34:14.4933185Z ##[debug]..=> 'VERCEL_APP_URL'
+2025-12-02T14:34:14.4938710Z ##[debug]=> '***'
+2025-12-02T14:34:14.4943985Z ##[debug]Result: '***'
+2025-12-02T14:34:14.4954559Z ##[debug]Evaluating: secrets.CRON_SECRET
+2025-12-02T14:34:14.4955244Z ##[debug]Evaluating Index:
+2025-12-02T14:34:14.4955893Z ##[debug]..Evaluating secrets:
+2025-12-02T14:34:14.4956547Z ##[debug]..=> Object
+2025-12-02T14:34:14.4957085Z ##[debug]..Evaluating String:
+2025-12-02T14:34:14.4957982Z ##[debug]..=> 'CRON_SECRET'
+2025-12-02T14:34:14.4959085Z ##[debug]=> '***'
+2025-12-02T14:34:14.4959929Z ##[debug]Result: '***'
+2025-12-02T14:34:14.4969586Z ##[debug]Evaluating condition for step: 'Call /api/cron/simulation-tick'
+2025-12-02T14:34:14.4990854Z ##[debug]Evaluating: success()
+2025-12-02T14:34:14.4992359Z ##[debug]Evaluating success:
+2025-12-02T14:34:14.5000422Z ##[debug]=> true
+2025-12-02T14:34:14.5003033Z ##[debug]Result: true
+2025-12-02T14:34:14.5017894Z ##[debug]Starting: Call /api/cron/simulation-tick
+2025-12-02T14:34:14.5130187Z ##[debug]Loading inputs
+2025-12-02T14:34:14.5135995Z ##[debug]Loading env
+2025-12-02T14:34:14.5204337Z ##[group]Run if [ -z "$VERCEL_APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+2025-12-02T14:34:14.5205283Z [36;1mif [ -z "$VERCEL_APP_URL" ] || [ -z "$CRON_SECRET" ]; then[0m
+2025-12-02T14:34:14.5206201Z [36;1m  echo "::error::VERCEL_APP_URL ou CRON_SECRET non défini dans les secrets GitHub"[0m
+2025-12-02T14:34:14.5207134Z [36;1m  exit 1[0m
+2025-12-02T14:34:14.5207872Z [36;1mfi[0m
+2025-12-02T14:34:14.5208564Z [36;1mresponse=$(curl -s -L -w "\n%{http_code}" -X GET \[0m
+2025-12-02T14:34:14.5209326Z [36;1m  "$VERCEL_APP_URL/api/cron/simulation-tick" \[0m
+2025-12-02T14:34:14.5210167Z [36;1m  -H "Authorization: ***")[0m
+2025-12-02T14:34:14.5210884Z [36;1mhttp_code=$(echo "$response" | tail -n1)[0m
+2025-12-02T14:34:14.5211600Z [36;1mbody=$(echo "$response" | head -n-1)[0m
+2025-12-02T14:34:14.5212228Z [36;1mecho "HTTP Status: $http_code"[0m
+2025-12-02T14:34:14.5212939Z [36;1mecho "Response Body: $body"[0m
+2025-12-02T14:34:14.5213573Z [36;1mif [ "$http_code" -ne 200 ]; then[0m
+2025-12-02T14:34:14.5214254Z [36;1m  echo "::error::API call failed with status $http_code"[0m
+2025-12-02T14:34:14.5214980Z [36;1m  exit 1[0m
+2025-12-02T14:34:14.5215477Z [36;1mfi[0m
+2025-12-02T14:34:14.5783725Z shell: /usr/bin/bash -e {0}
+2025-12-02T14:34:14.5784652Z env:
+2025-12-02T14:34:14.5785279Z   VERCEL_APP_URL: ***
+2025-12-02T14:34:14.5786221Z   CRON_SECRET: ***
+2025-12-02T14:34:14.5786721Z ##[endgroup]
+2025-12-02T14:34:14.5857184Z ##[debug]/usr/bin/bash -e /home/runner/work/_temp/f2f1af8a-b2b8-478b-a651-85449a1cd66c.sh
+2025-12-02T14:34:35.8298270Z HTTP Status: 200
+2025-12-02T14:34:35.8388691Z Response Body: {"success":true,"day":5,"status":"RUNNING","decisions":[{"botType":"CHEAP","action":"HOLD","quantity":0,"reason":"Prix en hausse mais MACD baissier (-2.32), RSI neutre (48.14), sentiment incertain – signaux non bullish, prudence maintenue"},{"botType":"PREMIUM","action":"HOLD","quantity":0,"reason":"Erreur lors de la prise de décision: Failed to parse JSON: Unterminated string in JSON at position 15 (line 2 column 14)"},{"botType":"ALGO","action":"HOLD","quantity":0,"reason":"⏳ Attente signal | Score: 0.14"}]}
+2025-12-02T14:34:35.8437974Z ##[debug]Finishing: Call /api/cron/simulation-tick
+2025-12-02T14:34:35.8449052Z ##[debug]Evaluating condition for step: 'Success Notification'
+2025-12-02T14:34:35.8454068Z ##[debug]Evaluating: success()
+2025-12-02T14:34:35.8454526Z ##[debug]Evaluating success:
+2025-12-02T14:34:35.8455057Z ##[debug]=> true
+2025-12-02T14:34:35.8455546Z ##[debug]Result: true
+2025-12-02T14:34:35.8456268Z ##[debug]Starting: Success Notification
+2025-12-02T14:34:35.8466962Z ##[debug]Loading inputs
+2025-12-02T14:34:35.8468321Z ##[debug]Loading env
+2025-12-02T14:34:35.8472950Z ##[group]Run echo "✅ Simulation tick executed successfully"
+2025-12-02T14:34:35.8473387Z [36;1mecho "✅ Simulation tick executed successfully"[0m
+2025-12-02T14:34:35.8505611Z shell: /usr/bin/bash -e {0}
+2025-12-02T14:34:35.8505918Z ##[endgroup]
+2025-12-02T14:34:35.8538054Z ##[debug]/usr/bin/bash -e /home/runner/work/_temp/34359860-23cf-4bbb-b562-6a47a2a61a5d.sh
+2025-12-02T14:34:35.8557422Z ✅ Simulation tick executed successfully
+2025-12-02T14:34:35.8562383Z ##[debug]Finishing: Success Notification
+2025-12-02T14:34:35.8568799Z ##[debug]Evaluating condition for step: 'Failure Notification'
+2025-12-02T14:34:35.8570737Z ##[debug]Evaluating: failure()
+2025-12-02T14:34:35.8571170Z ##[debug]Evaluating failure:
+2025-12-02T14:34:35.8573393Z ##[debug]=> false
+2025-12-02T14:34:35.8573882Z ##[debug]Result: false
+2025-12-02T14:34:35.8616155Z ##[debug]Starting: Complete job
+2025-12-02T14:34:35.8618141Z Uploading runner diagnostic logs
+2025-12-02T14:34:35.8629060Z ##[debug]Starting diagnostic file upload.
+2025-12-02T14:34:35.8629452Z ##[debug]Setting up diagnostic log folders.
+2025-12-02T14:34:35.8631432Z ##[debug]Creating diagnostic log files folder.
+2025-12-02T14:34:35.8640114Z ##[debug]Copying 1 worker diagnostic logs.
+2025-12-02T14:34:35.8649313Z ##[debug]Copying 1 runner diagnostic logs.
+2025-12-02T14:34:35.8650572Z ##[debug]Zipping diagnostic files.
+2025-12-02T14:34:35.8710917Z ##[debug]Uploading diagnostic metadata file.
+2025-12-02T14:34:35.8736464Z ##[debug]Diagnostic file upload complete.
+2025-12-02T14:34:35.8737081Z Completed runner diagnostic log upload
+2025-12-02T14:34:35.8737399Z Cleaning up orphan processes
+2025-12-02T14:34:35.8983018Z ##[debug]Finishing: Complete job
+2025-12-02T14:34:35.9011556Z ##[debug]Finishing: trigger-simulation-tick

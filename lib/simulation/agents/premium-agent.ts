@@ -1,3 +1,4 @@
+import { jsonrepair } from 'jsonrepair';
 import { getBotContext } from '../bot-context';
 
 interface DecisionResult {
@@ -25,35 +26,7 @@ export async function decide(
   portfolio: Portfolio,
   modelId: string
 ): Promise<DecisionResult> {
-  const context = snapshot.simulationId
-    ? await getBotContext(snapshot.simulationId, 'PREMIUM', 3)
-    : "Première décision de trading.";
-
-  const prompt = `Tu es une API JSON. Tu ne dois RIEN répondre d'autre que le JSON strict. Pas de markdown, pas d'explications.
-  
-  Vous êtes un trader professionnel expérimenté. 
-
-Contexte précédent:
-${context}
-
-Données actuelles:
-- Prix: ${snapshot.price}$
-- RSI: ${snapshot.rsi ?? 'N/A'}
-- MACD: ${snapshot.macd ?? 'N/A'}
-- Sentiment: ${snapshot.sentimentScore} (${snapshot.sentimentReason})
-
-Votre portefeuille:
-- Cash: ${portfolio.cash}$
-- Actions: ${portfolio.shares}
-
-Règles:
-- LONG-ONLY: Ne vendez que si vous possédez des actions (shares > 0)
-- Analysez les indicateurs techniques et le sentiment pour prendre une décision éclairée
-- Si certains indicateurs sont "N/A", basez-vous sur les autres données disponibles (Prix, Sentiment, etc.)
-- Décidez intelligemment entre BUY, SELL ou HOLD
-
-Répondez en JSON strict:
-{"action": "BUY"|"SELL"|"HOLD", "quantity": nombre, "reason": "explication détaillée de votre analyse", "confidence": 0-1}`;
+  // ... (contexte et prompt restent inchangés)
 
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -66,7 +39,7 @@ Répondez en JSON strict:
         model: modelId,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
-        max_tokens: 250
+        max_tokens: 1000 // Augmenté pour éviter la troncature
       })
     });
 
@@ -95,29 +68,50 @@ Répondez en JSON strict:
       throw new Error('Empty response from model');
     }
 
-    // Nettoyage robuste du contenu (enlève markdown ```json ... ```)
+    // Nettoyage basique (enlève markdown ```json ... ```)
     let cleanContent = content.replace(/```json/g, '').replace(/```/g, '').trim();
 
-    // Extraction du bloc JSON si du texte traîne autour
+    // Extraction du bloc JSON si possible (pour aider jsonrepair)
     const firstBrace = cleanContent.indexOf('{');
     const lastBrace = cleanContent.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace !== -1) {
       cleanContent = cleanContent.substring(firstBrace, lastBrace + 1);
+    } else if (firstBrace !== -1) {
+      // Si on a le début mais pas la fin (tronqué), on prend tout depuis le début
+      cleanContent = cleanContent.substring(firstBrace);
     }
 
     let decision;
     try {
-      decision = JSON.parse(cleanContent);
+      // Tentative 1: jsonrepair (magique pour les JSON tronqués ou malformés)
+      const repaired = jsonrepair(cleanContent);
+      decision = JSON.parse(repaired);
     } catch (e) {
-      console.error('JSON Parse Error. Raw content:', content);
-      throw new Error(`Failed to parse JSON: ${(e as Error).message}`);
+      console.warn('jsonrepair failed, trying regex fallback. Error:', e);
+
+      // Tentative 2: Fallback Regex "Sauve qui peut"
+      // On cherche juste l'action et la quantité, le reste on met des valeurs par défaut
+      const actionMatch = content.match(/"action"\s*:\s*"?(BUY|SELL|HOLD)"?/i);
+      const quantityMatch = content.match(/"quantity"\s*:\s*(\d+(\.\d+)?)/);
+
+      if (actionMatch) {
+        console.log('Regex fallback successful');
+        decision = {
+          action: actionMatch[1].toUpperCase(),
+          quantity: quantityMatch ? parseFloat(quantityMatch[1]) : 0,
+          reason: "Récupéré via fallback (JSON invalide)",
+          confidence: 0.5
+        };
+      } else {
+        throw new Error(`Failed to parse JSON and fallback failed: ${(e as Error).message}`);
+      }
     }
 
     // Valider la décision
     return {
-      action: decision.action || 'HOLD',
+      action: (decision.action as 'BUY' | 'SELL' | 'HOLD') || 'HOLD',
       quantity: Math.max(0, Math.floor(decision.quantity || 0)),
-      reason: decision.reason || 'Décision de l\'IA',
+      reason: decision.reason || 'Décision de l\'IA (Recovered)',
       confidence: Math.min(1, Math.max(0, decision.confidence || 0.5))
     };
   } catch (error: any) {
