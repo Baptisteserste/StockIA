@@ -37,7 +37,8 @@
     "snoowrap": "^1.23.0",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
-    "technicalindicators": "^3.1.0"
+    "technicalindicators": "^3.1.0",
+    "yahoo-finance2": "^3.10.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
