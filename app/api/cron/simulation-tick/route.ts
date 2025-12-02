@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
   const headerKey = req.headers.get('x-cron-key');
   const url = new URL(req.url);
   const queryKey = url.searchParams.get('key');
+  const force = url.searchParams.get('force') === 'true';
 
   const bearerOk = authHeader === `Bearer ${process.env.CRON_SECRET}`;
   const headerKeyOk = headerKey === process.env.CRON_SECRET;
@@ -23,19 +24,19 @@ export async function GET(req: NextRequest) {
   // Guard weekday (lundi=1 à vendredi=5)
   const now = new Date();
   const day = now.getDay();
-  if (day === 0 || day === 6) {
+  if (!force && (day === 0 || day === 6)) {
     return NextResponse.json({ skipped: true, reason: 'weekend' });
   }
 
   // Idempotence check
   const rounded = new Date(now);
   rounded.setMinutes(0, 0, 0);
-  
+
   const existing = await prisma.marketSnapshot.findFirst({
     where: { timestamp: rounded }
   });
-  
-  if (existing) {
+
+  if (!force && existing) {
     return NextResponse.json({ skipped: true, reason: 'already_processed' });
   }
 
@@ -54,11 +55,11 @@ export async function GET(req: NextRequest) {
     const quoteTest = await fetch(
       `https://finnhub.io/api/v1/quote?symbol=${config.symbol}&token=${process.env.FINNHUB_API_KEY}`
     );
-    
+
     if (!quoteTest.ok) {
       return NextResponse.json({ error: 'Invalid symbol' }, { status: 400 });
     }
-    
+
     const quote = await quoteTest.json();
     if (quote.c === undefined) {
       return NextResponse.json({ error: 'No data for symbol' }, { status: 400 });
@@ -148,10 +149,10 @@ export async function GET(req: NextRequest) {
         });
 
         // Calculer nouveau portfolio
-        const newShares = action === 'BUY' 
-          ? portfolio.shares + quantity 
+        const newShares = action === 'BUY'
+          ? portfolio.shares + quantity
           : portfolio.shares - quantity;
-        
+
         const newCash = action === 'BUY'
           ? portfolio.cash - (quantity * snapshot.price)
           : portfolio.cash + (quantity * snapshot.price);
@@ -184,7 +185,7 @@ export async function GET(req: NextRequest) {
 
     await prisma.simulationConfig.update({
       where: { id: config.id },
-      data: { 
+      data: {
         currentDay: newDay,
         status: newStatus as 'IDLE' | 'RUNNING' | 'COMPLETED'
       }
