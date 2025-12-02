@@ -29,7 +29,9 @@ export async function decide(
     ? await getBotContext(snapshot.simulationId, 'PREMIUM', 3)
     : "Première décision de trading.";
 
-  const prompt = `Vous êtes un trader professionnel expérimenté. 
+  const prompt = `Tu es une API JSON. Tu ne dois RIEN répondre d'autre que le JSON strict. Pas de markdown, pas d'explications.
+  
+  Vous êtes un trader professionnel expérimenté. 
 
 Contexte précédent:
 ${context}
@@ -93,19 +95,22 @@ Répondez en JSON strict:
       throw new Error('Empty response from model');
     }
 
-    // Extraire JSON du texte (peut contenir des backticks markdown)
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error('No JSON found in response:', content);
-      throw new Error('No JSON in response');
+    // Nettoyage robuste du contenu (enlève markdown ```json ... ```)
+    let cleanContent = content.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    // Extraction du bloc JSON si du texte traîne autour
+    const firstBrace = cleanContent.indexOf('{');
+    const lastBrace = cleanContent.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      cleanContent = cleanContent.substring(firstBrace, lastBrace + 1);
     }
 
     let decision;
     try {
-      decision = JSON.parse(jsonMatch[0]);
+      decision = JSON.parse(cleanContent);
     } catch (e) {
-      console.error('Failed to parse JSON:', jsonMatch[0]);
-      throw new Error('Invalid JSON format');
+      console.error('JSON Parse Error. Raw content:', content);
+      throw new Error(`Failed to parse JSON: ${(e as Error).message}`);
     }
 
     // Valider la décision
