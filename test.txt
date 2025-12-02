@@ -1,0 +1,33 @@
+
+> nextjs@0.1.0 test:cron
+> npx ts-node --compiler-options '{"module":"commonjs"}' scripts/trigger-local-tick.ts
+
+[dotenv@17.2.3] injecting env (12) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+🚀 Triggering local simulation tick on http://localhost:3000/api/cron/simulation-tick?force=true...
+📡 Status: 200
+📦 Response: {
+  "success": true,
+  "day": 9,
+  "status": "RUNNING",
+  "decisions": [
+    {
+      "botType": "CHEAP",
+      "action": "HOLD",
+      "quantity": 0,
+      "reason": "RSI neutre (47.74), MACD baissier (-2.36), sentiment erreur – signaux non bullish, prudence maintenue"
+    },
+    {
+      "botType": "PREMIUM",
+      "action": "HOLD",
+      "quantity": 0,
+      "reason": "Les indicateurs techniques ne justifient pas une entrée en position. Le"
+    },
+    {
+      "botType": "ALGO",
+      "action": "HOLD",
+      "quantity": 0,
+      "reason": "⏳ Attente signal | Score: -0.02"
+    }
+  ]
+}
+✅ Tick executed successfully!

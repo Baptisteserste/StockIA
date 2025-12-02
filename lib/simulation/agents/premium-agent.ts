@@ -26,7 +26,34 @@ export async function decide(
   portfolio: Portfolio,
   modelId: string
 ): Promise<DecisionResult> {
-  // ... (contexte et prompt restent inchangés)
+  const context = snapshot.simulationId
+    ? await getBotContext(snapshot.simulationId, 'PREMIUM', 3)
+    : "Première décision de trading.";
+
+  const prompt = `Tu es une API JSON. Réponds UNIQUEMENT en JSON strict.
+  
+  Trader Pro. Objectif: Performance Max.
+
+Contexte:
+${context}
+
+Marché:
+- Prix: ${snapshot.price}$
+- RSI: ${snapshot.rsi ?? 'N/A'}
+- MACD: ${snapshot.macd ?? 'N/A'}
+- Sentiment: ${snapshot.sentimentScore} (${snapshot.sentimentReason})
+
+Portfolio:
+- Cash: ${portfolio.cash}$
+- Actions: ${portfolio.shares}
+
+Règles:
+1. LONG-ONLY (Pas de short).
+2. Si indicateurs "N/A": Utilise Prix/Sentiment.
+3. CONCISION EXTRÊME: "reason" doit faire MOINS DE 20 MOTS.
+
+JSON attendu:
+{"action": "BUY"|"SELL"|"HOLD", "quantity": number, "reason": "Court (<20 mots)", "confidence": 0-1}`;
 
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -108,9 +135,12 @@ export async function decide(
     }
 
     // Valider la décision
+    const safeAction = (decision.action as 'BUY' | 'SELL' | 'HOLD') || 'HOLD';
+    const safeQuantity = safeAction === 'HOLD' ? 0 : Math.max(0, Math.floor(decision.quantity || 0));
+
     return {
-      action: (decision.action as 'BUY' | 'SELL' | 'HOLD') || 'HOLD',
-      quantity: Math.max(0, Math.floor(decision.quantity || 0)),
+      action: safeAction,
+      quantity: safeQuantity,
       reason: decision.reason || 'Décision de l\'IA (Recovered)',
       confidence: Math.min(1, Math.max(0, decision.confidence || 0.5))
     };
