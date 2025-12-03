@@ -30,30 +30,29 @@ export async function decide(
     ? await getBotContext(snapshot.simulationId, 'PREMIUM', 3)
     : "Première décision de trading.";
 
-  const prompt = `Tu es une API JSON. Réponds UNIQUEMENT en JSON strict.
-  
-  Trader Pro. Objectif: Performance Max.
+  const prompt = `Vous êtes un trader professionnel expérimenté.
 
-Contexte:
+Contexte précédent:
 ${context}
 
-Marché:
+Données actuelles:
 - Prix: ${snapshot.price}$
 - RSI: ${snapshot.rsi ?? 'N/A'}
 - MACD: ${snapshot.macd ?? 'N/A'}
 - Sentiment: ${snapshot.sentimentScore} (${snapshot.sentimentReason})
 
-Portfolio:
+Votre portefeuille:
 - Cash: ${portfolio.cash}$
 - Actions: ${portfolio.shares}
 
 Règles:
-1. LONG-ONLY (Pas de short).
-2. Si indicateurs "N/A": Utilise Prix/Sentiment.
-3. CONCISION EXTRÊME: "reason" doit faire MOINS DE 20 MOTS.
+- LONG-ONLY: Ne vendez que si vous possédez des actions (shares > 0)
+- Analysez les indicateurs techniques (RSI, MACD) et le sentiment pour prendre une décision éclairée
+- Si certains indicateurs sont "N/A", basez-vous sur les autres données disponibles
+- Privilégiez les opportunités avec un bon rapport risque/rendement
 
-JSON attendu:
-{"action": "BUY"|"SELL"|"HOLD", "quantity": number, "reason": "Court (<20 mots)", "confidence": 0-1}`;
+Répondez en JSON strict:
+{"action": "BUY"|"SELL"|"HOLD", "quantity": nombre, "reason": "analyse concise", "confidence": 0-1}`;
 
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -66,7 +65,7 @@ JSON attendu:
         model: modelId,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
-        max_tokens: 1000 // Augmenté pour éviter la troncature
+        max_tokens: 1000 // Pour modèles "thinking" (reasoning 478+ tokens)
       })
     });
 
@@ -98,6 +97,8 @@ JSON attendu:
     // Nettoyage basique (enlève markdown ```json ... ```)
     let cleanContent = content.replace(/```json/g, '').replace(/```/g, '').trim();
 
+
+
     // Extraction du bloc JSON si possible (pour aider jsonrepair)
     const firstBrace = cleanContent.indexOf('{');
     const lastBrace = cleanContent.lastIndexOf('}');
@@ -108,11 +109,15 @@ JSON attendu:
       cleanContent = cleanContent.substring(firstBrace);
     }
 
+
+
     let decision;
     try {
       // Tentative 1: jsonrepair (magique pour les JSON tronqués ou malformés)
       const repaired = jsonrepair(cleanContent);
+
       decision = JSON.parse(repaired);
+
     } catch (e) {
       console.warn('jsonrepair failed, trying regex fallback. Error:', e);
 
