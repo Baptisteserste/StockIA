@@ -9,7 +9,10 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:cron": "npx ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/trigger-local-tick.ts",
-    "reset:sim": "npx ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/reset-simulation.ts"
+    "reset:sim": "npx ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/reset-simulation.ts",
+    "test:premium": "npx tsx scripts/test-premium-agent.ts",
+    "test:cheap": "npx tsx scripts/test-cheap-agent.ts",
+    "update:model": "npx tsx scripts/update-premium-model.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.35.0",
