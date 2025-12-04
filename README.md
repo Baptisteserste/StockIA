@@ -16,6 +16,20 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Debug
+
+### Routes
+- `/debug` - Interface de debug avec logs des décisions
+
+### Scripts
+```bash
+npm run export:debug      # Export dernier tick en JSON
+npm run export:debug 3    # Export les 3 derniers ticks
+npm run test:premium      # Test agent Premium isolé
+npm run test:cheap        # Test agent Cheap isolé
+npm run reset:sim         # Reset simulation active
+```
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
