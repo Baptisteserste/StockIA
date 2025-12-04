@@ -12,7 +12,8 @@
     "reset:sim": "npx ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/reset-simulation.ts",
     "test:premium": "npx tsx scripts/test-premium-agent.ts",
     "test:cheap": "npx tsx scripts/test-cheap-agent.ts",
-    "update:model": "npx tsx scripts/update-premium-model.ts"
+    "update:model": "npx tsx scripts/update-premium-model.ts",
+    "export:debug": "npx tsx scripts/export-debug.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.35.0",
