@@ -25,15 +25,15 @@ async function updatePremiumModel() {
         console.log(`Found simulation ${activeSim.id} (${activeSim.symbol})`);
         console.log(`  Current cheapModelId: ${activeSim.cheapModelId}`);
 
-        // Update le modèle Cheap vers Qwen3 235B (le plus intelligent gratuit)
+        // Update le modèle Cheap vers DeepSeek R1T Chimera (le meilleur gratuit)
         await prisma.simulationConfig.update({
             where: { id: activeSim.id },
             data: {
-                cheapModelId: 'qwen/qwen3-235b-a22b:free'
+                cheapModelId: 'tngtech/deepseek-r1t-chimera:free'
             }
         });
 
-        console.log('✅ Cheap model updated to: qwen/qwen3-235b-a22b:free');
+        console.log('✅ Cheap model updated to: tngtech/deepseek-r1t-chimera:free');
 
     } catch (error) {
         console.error('❌ Update failed:', error);

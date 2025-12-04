@@ -13,12 +13,15 @@ interface OpenRouterModel {
     context_length: number;
 }
 
-// Liste de fallback en dur (modèles gratuits fiables)
+// Liste de fallback en dur (modèles gratuits triés par intelligence)
 const FALLBACK_FREE_MODELS = [
-    'nvidia/nemotron-nano-9b-v2:free',
-    'google/gemma-3n-e4b-it:free',
-    'qwen/qwen3-4b:free',
-    'amazon/nova-2-lite-v1:free'
+    'qwen/qwen3-235b-a22b:free',           // 235B - le plus gros
+    'tngtech/deepseek-r1t-chimera:free',   // Reasoning/thinking
+    'allenai/olmo-3-32b-think:free',       // 32B thinking
+    'nvidia/nemotron-nano-9b-v2:free',     // 9B Nvidia
+    'google/gemma-3n-e4b-it:free',         // 4B Google
+    'qwen/qwen3-4b:free',                  // 4B Qwen
+    'amazon/nova-2-lite-v1:free'           // Amazon Nova
 ];
 
 /**

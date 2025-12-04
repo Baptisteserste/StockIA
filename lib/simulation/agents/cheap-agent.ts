@@ -72,6 +72,9 @@ Répondez en JSON strict:
 
   try {
     let currentModel = modelId;
+    // Modèles gratuits = pas de limite, on met beaucoup pour les thinking models
+    const maxTokens = modelId.includes(':free') ? 2000 : 200;
+
     let response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -82,22 +85,28 @@ Répondez en JSON strict:
         model: currentModel,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
-        max_tokens: 200
+        max_tokens: maxTokens
       })
     });
 
     // Fallback si modèle n'existe plus (404)
+    // Ordre par intelligence: gros modèles et thinking d'abord
     if (response.status === 404) {
       console.warn(`Model ${modelId} not found, trying fallback...`);
       const fallbackModels = [
-        'nvidia/nemotron-nano-9b-v2:free',
-        'google/gemma-3n-e4b-it:free',
-        'qwen/qwen3-4b:free'
+        'qwen/qwen3-235b-a22b:free',           // 235B - le plus gros
+        'tngtech/deepseek-r1t-chimera:free',   // Reasoning/thinking
+        'allenai/olmo-3-32b-think:free',       // 32B thinking
+        'nvidia/nemotron-nano-9b-v2:free',     // 9B Nvidia
+        'google/gemma-3n-e4b-it:free',         // 4B Google
+        'qwen/qwen3-4b:free'                   // 4B Qwen
       ];
 
       for (const fallback of fallbackModels) {
+        if (fallback === modelId) continue; // Skip le modèle qui a fail
         currentModel = fallback;
         debugData.model = fallback;
+        const fallbackMaxTokens = fallback.includes(':free') ? 2000 : 200;
         response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -108,11 +117,11 @@ Répondez en JSON strict:
             model: fallback,
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.7,
-            max_tokens: 200
+            max_tokens: fallbackMaxTokens
           })
         });
 
-        if (response.status !== 404) {
+        if (response.status !== 404 && response.status !== 429) {
           console.log(`Fallback to ${fallback} successful`);
           break;
         }
