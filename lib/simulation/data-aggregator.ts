@@ -60,7 +60,7 @@ async function fetchWithFallback<T>(fn: () => Promise<T>, fallback: T): Promise<
   }
 }
 
-import yahooFinance from 'yahoo-finance2';
+
 
 async function fetchFinnhubData(symbol: string) {
   const apiKey = process.env.FINNHUB_API_KEY;
@@ -105,40 +105,43 @@ async function fetchFinnhubData(symbol: string) {
   if (!candles) {
     try {
       console.log(`Fetching historical data for ${symbol} from Yahoo Finance...`);
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 60); // 60 jours de marge
 
-      const queryOptions = { period1: startDate, period2: endDate, interval: '1d' as const };
+      const now = Math.floor(Date.now() / 1000);
+      const from60d = now - 60 * 24 * 60 * 60; // 60 jours
 
-      // Fix for "Call const yahooFinance = new YahooFinance() first"
-      let yf: any = yahooFinance;
-      if (typeof yf === 'function' || typeof yf?.chart !== 'function') {
-        try {
-          yf = new (yf as any)();
-        } catch (e) {
-          if (yf.YahooFinance) {
-            yf = new yf.YahooFinance();
+      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${from60d}&period2=${now}&interval=1d`;
+
+      const yahooRes = await fetch(yahooUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+
+      if (yahooRes.ok) {
+        const yahooData = await yahooRes.json();
+        const result = yahooData.chart?.result?.[0];
+
+        if (result && result.indicators?.quote?.[0]) {
+          const timestamps = result.timestamp || [];
+          const quote = result.indicators.quote[0];
+
+          // Filtrer les données valides
+          const validIndices = timestamps.map((_: any, i: number) => i)
+            .filter((i: number) => quote.close?.[i] !== null);
+
+          if (validIndices.length >= 30) {
+            candles = {
+              c: validIndices.map((i: number) => quote.close[i]),
+              h: validIndices.map((i: number) => quote.high?.[i] || quote.close[i]),
+              l: validIndices.map((i: number) => quote.low?.[i] || quote.close[i]),
+              o: validIndices.map((i: number) => quote.open?.[i] || quote.close[i]),
+              v: validIndices.map((i: number) => quote.volume?.[i] || 0),
+              t: validIndices.map((i: number) => timestamps[i]),
+              s: 'ok'
+            };
+            console.log(`Successfully fetched ${candles.c.length} candles from Yahoo Finance`);
           }
         }
-      }
-
-      const result = await yf.chart(symbol, queryOptions);
-
-      if (result && result.quotes && result.quotes.length >= 30) {
-        // Convertir format Yahoo vers format Finnhub pour compatibilité
-        const quotes = result.quotes.filter((q: any) => q.close !== null); // Filtrer jours sans trade
-
-        candles = {
-          c: quotes.map((q: any) => q.close),
-          h: quotes.map((q: any) => q.high),
-          l: quotes.map((q: any) => q.low),
-          o: quotes.map((q: any) => q.open),
-          v: quotes.map((q: any) => q.volume),
-          t: quotes.map((q: any) => q.date.getTime() / 1000),
-          s: 'ok'
-        };
-        console.log(`Successfully fetched ${candles.c.length} candles from Yahoo Finance`);
       }
     } catch (error) {
       console.error('Yahoo Finance fetch failed:', error);
