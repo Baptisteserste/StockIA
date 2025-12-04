@@ -5,6 +5,19 @@ interface DecisionResult {
   quantity: number;
   reason: string;
   confidence: number;
+  debugData?: DebugData;
+}
+
+interface DebugData {
+  model: string;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  finishReason?: string;
+  rawResponse?: string;
+  error?: string;
+  timestamp: string;
+  cost?: number;
 }
 
 interface MarketSnapshot {
@@ -52,6 +65,11 @@ Règles:
 Répondez en JSON strict:
 {"action": "BUY"|"SELL"|"HOLD", "quantity": nombre, "reason": "explication courte", "confidence": 0-1}`;
 
+  const debugData: DebugData = {
+    model: modelId,
+    timestamp: new Date().toISOString()
+  };
+
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -68,18 +86,30 @@ Répondez en JSON strict:
     });
 
     if (!response.ok) {
+      debugData.error = `HTTP ${response.status}: ${response.statusText}`;
       throw new Error(`OpenRouter API failed: ${response.statusText}`);
     }
 
     const data = await response.json();
 
+    // Capturer les infos de debug
+    if (data.usage) {
+      debugData.promptTokens = data.usage.prompt_tokens;
+      debugData.completionTokens = data.usage.completion_tokens;
+      debugData.totalTokens = data.usage.total_tokens;
+      debugData.cost = data.usage.cost;
+    }
+    debugData.finishReason = data.choices?.[0]?.finish_reason;
+
     // Gérer les erreurs de l'API
     if (data.error) {
+      debugData.error = JSON.stringify(data.error);
       console.error('OpenRouter error:', data.error);
       throw new Error(data.error.message || 'OpenRouter API error');
     }
 
     let content = data.choices?.[0]?.message?.content || '';
+    debugData.rawResponse = content.substring(0, 500); // Limiter la taille
 
     // Certains modèles (reasoning) mettent le contenu dans reasoning
     if (!content && data.choices?.[0]?.message?.reasoning) {
@@ -88,6 +118,7 @@ Répondez en JSON strict:
     }
 
     if (!content) {
+      debugData.error = 'Empty response from model';
       console.error('Empty response from model:', JSON.stringify(data));
       throw new Error('Empty response from model');
     }
@@ -95,6 +126,7 @@ Répondez en JSON strict:
     // Extraire JSON du texte (peut contenir des backticks markdown)
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
+      debugData.error = 'No JSON found in response';
       console.error('No JSON found in response:', content);
       throw new Error('No JSON in response');
     }
@@ -105,15 +137,19 @@ Répondez en JSON strict:
       action: decision.action || 'HOLD',
       quantity: Math.max(0, Math.floor(decision.quantity || 0)),
       reason: decision.reason || 'Décision de l\'IA',
-      confidence: Math.min(1, Math.max(0, decision.confidence || 0.5))
+      confidence: Math.min(1, Math.max(0, decision.confidence || 0.5)),
+      debugData
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Cheap agent decision failed:', error);
+    debugData.error = error.message;
+
     return {
       action: 'HOLD',
       quantity: 0,
       reason: 'Erreur lors de la prise de décision',
-      confidence: 0
+      confidence: 0,
+      debugData
     };
   }
 }
