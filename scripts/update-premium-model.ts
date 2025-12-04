@@ -23,17 +23,17 @@ async function updatePremiumModel() {
         }
 
         console.log(`Found simulation ${activeSim.id} (${activeSim.symbol})`);
-        console.log(`  Current premiumModelId: ${activeSim.premiumModelId}`);
+        console.log(`  Current cheapModelId: ${activeSim.cheapModelId}`);
 
-        // Update le modèle
+        // Update le modèle Cheap vers DeepSeek R1T Chimera (le meilleur gratuit)
         await prisma.simulationConfig.update({
             where: { id: activeSim.id },
             data: {
-                premiumModelId: 'google/gemini-2.5-flash'
+                cheapModelId: 'tngtech/deepseek-r1t-chimera:free'
             }
         });
 
-        console.log('✅ Premium model updated to: google/gemini-2.5-flash');
+        console.log('✅ Cheap model updated to: tngtech/deepseek-r1t-chimera:free');
 
     } catch (error) {
         console.error('❌ Update failed:', error);

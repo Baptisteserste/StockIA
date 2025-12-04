@@ -37,8 +37,8 @@ async function testCheapAgent() {
         shares: 0
     };
 
-    // Model ID (celui que tu utilises en prod)
-    const modelId = 'x-ai/grok-4.1-fast:free'; // Free model for Cheap
+    // Model ID - Qwen3 235B (le plus intelligent gratuit)
+    const modelId = 'qwen/qwen3-235b-a22b:free';
 
     console.log('\n📊 Market Data:');
     console.log(JSON.stringify(mockSnapshot, null, 2));

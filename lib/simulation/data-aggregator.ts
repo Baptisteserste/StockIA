@@ -182,6 +182,7 @@ async function calculateTechnicalIndicators(candles: any) {
 }
 
 async function analyzeSentimentWithGemini(symbol: string, news: any[]) {
+  // Utilise Google Gemini 2.5-flash-lite pour le sentiment
   if (!process.env.GEMINI_API_KEY) {
     console.warn('GEMINI_API_KEY not set, using default neutral sentiment');
     return { score: 0, reason: 'Analyse de sentiment indisponible (clé API manquante)' };
@@ -193,26 +194,32 @@ async function analyzeSentimentWithGemini(symbol: string, news: any[]) {
 
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
     const headlines = news.map(n => n.headline).join('\n');
-    const prompt = `Analyse le sentiment de ces titres financiers pour ${symbol}. Réponds uniquement en JSON strict: {"score": nombre entre -1 et 1, "reason": "résumé en 20 mots max"}
+    const prompt = `Analyse le sentiment global de ces titres financiers pour ${symbol}.
+
+Retourne un objet JSON avec:
+- score: nombre entre -1 (très négatif) et 1 (très positif)
+- reason: résumé en 20 mots max
 
 Titres:
-${headlines}`;
+${headlines}
+
+JSON:`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 
     // Extraire JSON du texte (peut contenir des backticks markdown)
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonMatch = text.match(/\{[\s\S]*?\}/);
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
     }
 
     return JSON.parse(text);
   } catch (error) {
-    console.error('Gemini sentiment analysis failed:', error);
+    console.error('Sentiment analysis failed:', error);
     return { score: 0, reason: 'Erreur lors de l\'analyse de sentiment' };
   }
 }

@@ -1,56 +1,56 @@
-﻿2025-12-03T13:53:55.9079489Z Current runner version: '2.329.0'
-2025-12-03T13:53:55.9113184Z ##[group]Runner Image Provisioner
-2025-12-03T13:53:55.9114444Z Hosted Compute Agent
-2025-12-03T13:53:55.9115443Z Version: 20251016.436
-2025-12-03T13:53:55.9116510Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
-2025-12-03T13:53:55.9117803Z Build Date: 2025-10-15T20:44:12Z
-2025-12-03T13:53:55.9118776Z ##[endgroup]
-2025-12-03T13:53:55.9119888Z ##[group]Operating System
-2025-12-03T13:53:55.9121039Z Ubuntu
-2025-12-03T13:53:55.9121822Z 24.04.3
-2025-12-03T13:53:55.9122499Z LTS
-2025-12-03T13:53:55.9123305Z ##[endgroup]
-2025-12-03T13:53:55.9124125Z ##[group]Runner Image
-2025-12-03T13:53:55.9125016Z Image: ubuntu-24.04
-2025-12-03T13:53:55.9126055Z Version: 20251112.124.1
-2025-12-03T13:53:55.9127937Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251112.124/images/ubuntu/Ubuntu2404-Readme.md
-2025-12-03T13:53:55.9130918Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251112.124
-2025-12-03T13:53:55.9132769Z ##[endgroup]
-2025-12-03T13:53:55.9134869Z ##[group]GITHUB_TOKEN Permissions
-2025-12-03T13:53:55.9137643Z Contents: read
-2025-12-03T13:53:55.9138531Z Metadata: read
-2025-12-03T13:53:55.9139427Z Packages: read
-2025-12-03T13:53:55.9140505Z ##[endgroup]
-2025-12-03T13:53:55.9143346Z Secret source: Actions
-2025-12-03T13:53:55.9144862Z Prepare workflow directory
-2025-12-03T13:53:55.9515255Z Prepare all required actions
-2025-12-03T13:53:55.9652008Z Complete job name: trigger-simulation-tick
-2025-12-03T13:53:56.0578040Z ##[group]Run if [ -z "$VERCEL_APP_URL" ] || [ -z "$CRON_SECRET" ]; then
-2025-12-03T13:53:56.0579083Z [36;1mif [ -z "$VERCEL_APP_URL" ] || [ -z "$CRON_SECRET" ]; then[0m
-2025-12-03T13:53:56.0580256Z [36;1m  echo "::error::VERCEL_APP_URL ou CRON_SECRET non défini dans les secrets GitHub"[0m
-2025-12-03T13:53:56.0581091Z [36;1m  exit 1[0m
-2025-12-03T13:53:56.0581646Z [36;1mfi[0m
-2025-12-03T13:53:56.0582274Z [36;1mresponse=$(curl -s -L -w "\n%{http_code}" -X GET \[0m
-2025-12-03T13:53:56.0583189Z [36;1m  "$VERCEL_APP_URL/api/cron/simulation-tick" \[0m
-2025-12-03T13:53:56.0584122Z [36;1m  -H "Authorization: ***")[0m
-2025-12-03T13:53:56.0584796Z [36;1mhttp_code=$(echo "$response" | tail -n1)[0m
-2025-12-03T13:53:56.0585499Z [36;1mbody=$(echo "$response" | head -n-1)[0m
-2025-12-03T13:53:56.0586178Z [36;1mecho "HTTP Status: $http_code"[0m
-2025-12-03T13:53:56.0586846Z [36;1mecho "Response Body: $body"[0m
-2025-12-03T13:53:56.0587575Z [36;1mif [ "$http_code" -ne 200 ]; then[0m
-2025-12-03T13:53:56.0588276Z [36;1m  echo "::error::API call failed with status $http_code"[0m
-2025-12-03T13:53:56.0589043Z [36;1m  exit 1[0m
-2025-12-03T13:53:56.0589510Z [36;1mfi[0m
-2025-12-03T13:53:56.1317995Z shell: /usr/bin/bash -e {0}
-2025-12-03T13:53:56.1319061Z env:
-2025-12-03T13:53:56.1320104Z   VERCEL_APP_URL: ***
-2025-12-03T13:53:56.1320923Z   CRON_SECRET: ***
-2025-12-03T13:53:56.1321510Z ##[endgroup]
-2025-12-03T13:54:10.4900985Z HTTP Status: 200
-2025-12-03T13:54:10.4995556Z Response Body: {"success":true,"day":1,"status":"RUNNING","decisions":[{"botType":"CHEAP","action":"HOLD","quantity":0,"reason":"MACD négatif indique momentum baissier, RSI neutre, sentiment neutre ; attendre signal haussier pour entrée long-only"},{"botType":"PREMIUM","action":"HOLD","quantity":0,"reason":"Indicateurs techniques mitigés et baissiers. Absence de"},{"botType":"ALGO","action":"HOLD","quantity":0,"reason":"⏳ Attente signal | Score: 0.18"}]}
-2025-12-03T13:54:10.5162386Z ##[group]Run echo "✅ Simulation tick executed successfully"
-2025-12-03T13:54:10.5162897Z [36;1mecho "✅ Simulation tick executed successfully"[0m
-2025-12-03T13:54:10.5196323Z shell: /usr/bin/bash -e {0}
-2025-12-03T13:54:10.5196622Z ##[endgroup]
-2025-12-03T13:54:10.5249432Z ✅ Simulation tick executed successfully
-2025-12-03T13:54:10.5308420Z Cleaning up orphan processes
+﻿2025-12-03T20:46:10.8603698Z Current runner version: '2.329.0'
+2025-12-03T20:46:10.8638933Z ##[group]Runner Image Provisioner
+2025-12-03T20:46:10.8640040Z Hosted Compute Agent
+2025-12-03T20:46:10.8640946Z Version: 20251124.448
+2025-12-03T20:46:10.8641914Z Commit: fda5086b43ec66ade217e5fcd18146c879571177
+2025-12-03T20:46:10.8643170Z Build Date: 2025-11-24T21:16:26Z
+2025-12-03T20:46:10.8644110Z ##[endgroup]
+2025-12-03T20:46:10.8644900Z ##[group]Operating System
+2025-12-03T20:46:10.8645683Z Ubuntu
+2025-12-03T20:46:10.8646446Z 24.04.3
+2025-12-03T20:46:10.8647126Z LTS
+2025-12-03T20:46:10.8647744Z ##[endgroup]
+2025-12-03T20:46:10.8648547Z ##[group]Runner Image
+2025-12-03T20:46:10.8649429Z Image: ubuntu-24.04
+2025-12-03T20:46:10.8650223Z Version: 20251126.144.1
+2025-12-03T20:46:10.8651836Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251126.144/images/ubuntu/Ubuntu2404-Readme.md
+2025-12-03T20:46:10.8654527Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251126.144
+2025-12-03T20:46:10.8656157Z ##[endgroup]
+2025-12-03T20:46:10.8657798Z ##[group]GITHUB_TOKEN Permissions
+2025-12-03T20:46:10.8660666Z Contents: read
+2025-12-03T20:46:10.8661454Z Metadata: read
+2025-12-03T20:46:10.8662472Z Packages: read
+2025-12-03T20:46:10.8663357Z ##[endgroup]
+2025-12-03T20:46:10.8666275Z Secret source: Actions
+2025-12-03T20:46:10.8667655Z Prepare workflow directory
+2025-12-03T20:46:10.9054199Z Prepare all required actions
+2025-12-03T20:46:10.9189832Z Complete job name: trigger-simulation-tick
+2025-12-03T20:46:11.0126818Z ##[group]Run if [ -z "$VERCEL_APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+2025-12-03T20:46:11.0128356Z [36;1mif [ -z "$VERCEL_APP_URL" ] || [ -z "$CRON_SECRET" ]; then[0m
+2025-12-03T20:46:11.0129905Z [36;1m  echo "::error::VERCEL_APP_URL ou CRON_SECRET non défini dans les secrets GitHub"[0m
+2025-12-03T20:46:11.0131240Z [36;1m  exit 1[0m
+2025-12-03T20:46:11.0131932Z [36;1mfi[0m
+2025-12-03T20:46:11.0133742Z [36;1mresponse=$(curl -s -L -w "\n%{http_code}" -X GET \[0m
+2025-12-03T20:46:11.0134923Z [36;1m  "$VERCEL_APP_URL/api/cron/simulation-tick" \[0m
+2025-12-03T20:46:11.0136058Z [36;1m  -H "Authorization: ***")[0m
+2025-12-03T20:46:11.0136857Z [36;1mhttp_code=$(echo "$response" | tail -n1)[0m
+2025-12-03T20:46:11.0137613Z [36;1mbody=$(echo "$response" | head -n-1)[0m
+2025-12-03T20:46:11.0138442Z [36;1mecho "HTTP Status: $http_code"[0m
+2025-12-03T20:46:11.0139169Z [36;1mecho "Response Body: $body"[0m
+2025-12-03T20:46:11.0139987Z [36;1mif [ "$http_code" -ne 200 ]; then[0m
+2025-12-03T20:46:11.0140787Z [36;1m  echo "::error::API call failed with status $http_code"[0m
+2025-12-03T20:46:11.0141562Z [36;1m  exit 1[0m
+2025-12-03T20:46:11.0142370Z [36;1mfi[0m
+2025-12-03T20:46:11.0849356Z shell: /usr/bin/bash -e {0}
+2025-12-03T20:46:11.0850300Z env:
+2025-12-03T20:46:11.0851040Z   VERCEL_APP_URL: ***
+2025-12-03T20:46:11.0851743Z   CRON_SECRET: ***
+2025-12-03T20:46:11.0852498Z ##[endgroup]
+2025-12-03T20:46:16.4683562Z HTTP Status: 200
+2025-12-03T20:46:16.4771512Z Response Body: {"success":true,"day":3,"status":"RUNNING","decisions":[{"botType":"CHEAP","action":"HOLD","quantity":0,"reason":"Erreur lors de la prise de décision"},{"botType":"PREMIUM","action":"HOLD","quantity":0,"reason":"Le prix continue de baisser (179.69$ vs 180.47$). Le RSI (44.15) reste neutre avec une légère tendance à la baisse, et la MACD (-2.49) est toujours négative. L'absence de données de sentiment et la faiblesse persistante du prix ne justifient pas un achat. Le portefeuille est vide, donc pas de vente possible."},{"botType":"ALGO","action":"HOLD","quantity":0,"reason":"⏳ Attente signal | Score: 0.14"}]}
+2025-12-03T20:46:16.4856798Z ##[group]Run echo "✅ Simulation tick executed successfully"
+2025-12-03T20:46:16.4857365Z [36;1mecho "✅ Simulation tick executed successfully"[0m
+2025-12-03T20:46:16.4877569Z shell: /usr/bin/bash -e {0}
+2025-12-03T20:46:16.4878035Z ##[endgroup]
+2025-12-03T20:46:16.4920927Z ✅ Simulation tick executed successfully
+2025-12-03T20:46:16.4978526Z Cleaning up orphan processes

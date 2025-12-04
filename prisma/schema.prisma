@@ -89,6 +89,7 @@ model BotDecision {
   reason     String
   confidence Float?
   algoConfig Json?
+  debugData  Json?          // Raw debug data: tokens, finish_reason, raw response, errors
   createdAt  DateTime       @default(now())
   snapshot   MarketSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
 
