@@ -6,6 +6,19 @@ interface DecisionResult {
   quantity: number;
   reason: string;
   confidence: number;
+  debugData?: DebugData;
+}
+
+interface DebugData {
+  model: string;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  finishReason?: string;
+  rawResponse?: string;
+  error?: string;
+  timestamp: string;
+  cost?: number;
 }
 
 interface MarketSnapshot {
@@ -54,6 +67,11 @@ Règles:
 Répondez en JSON strict:
 {"action": "BUY"|"SELL"|"HOLD", "quantity": nombre, "reason": "analyse concise", "confidence": 0-1}`;
 
+  const debugData: DebugData = {
+    model: modelId,
+    timestamp: new Date().toISOString()
+  };
+
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -65,23 +83,35 @@ Répondez en JSON strict:
         model: modelId,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
-        max_tokens: 1000 // Pour modèles "thinking" (reasoning 478+ tokens)
+        max_tokens: 1000
       })
     });
 
     if (!response.ok) {
+      debugData.error = `HTTP ${response.status}: ${response.statusText}`;
       throw new Error(`OpenRouter API failed: ${response.statusText}`);
     }
 
     const data = await response.json();
 
+    // Capturer les infos de debug
+    if (data.usage) {
+      debugData.promptTokens = data.usage.prompt_tokens;
+      debugData.completionTokens = data.usage.completion_tokens;
+      debugData.totalTokens = data.usage.total_tokens;
+      debugData.cost = data.usage.cost;
+    }
+    debugData.finishReason = data.choices?.[0]?.finish_reason;
+
     // Gérer les erreurs de l'API
     if (data.error) {
+      debugData.error = JSON.stringify(data.error);
       console.error('OpenRouter error:', data.error);
       throw new Error(data.error.message || 'OpenRouter API error');
     }
 
     let content = data.choices?.[0]?.message?.content || '';
+    debugData.rawResponse = content.substring(0, 500); // Limiter la taille
 
     // Certains modèles (reasoning) mettent le contenu dans reasoning
     if (!content && data.choices?.[0]?.message?.reasoning) {
@@ -90,6 +120,7 @@ Répondez en JSON strict:
     }
 
     if (!content) {
+      debugData.error = 'Empty response from model';
       console.error('Empty response from model:', JSON.stringify(data));
       throw new Error('Empty response from model');
     }
@@ -97,32 +128,22 @@ Répondez en JSON strict:
     // Nettoyage basique (enlève markdown ```json ... ```)
     let cleanContent = content.replace(/```json/g, '').replace(/```/g, '').trim();
 
-
-
     // Extraction du bloc JSON si possible (pour aider jsonrepair)
     const firstBrace = cleanContent.indexOf('{');
     const lastBrace = cleanContent.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace !== -1) {
       cleanContent = cleanContent.substring(firstBrace, lastBrace + 1);
     } else if (firstBrace !== -1) {
-      // Si on a le début mais pas la fin (tronqué), on prend tout depuis le début
       cleanContent = cleanContent.substring(firstBrace);
     }
 
-
-
     let decision;
     try {
-      // Tentative 1: jsonrepair (magique pour les JSON tronqués ou malformés)
       const repaired = jsonrepair(cleanContent);
-
       decision = JSON.parse(repaired);
-
     } catch (e) {
       console.warn('jsonrepair failed, trying regex fallback. Error:', e);
 
-      // Tentative 2: Fallback Regex "Sauve qui peut"
-      // On cherche juste l'action et la quantité, le reste on met des valeurs par défaut
       const actionMatch = content.match(/"action"\s*:\s*"?(BUY|SELL|HOLD)"?/i);
       const quantityMatch = content.match(/"quantity"\s*:\s*(\d+(\.\d+)?)/);
 
@@ -147,17 +168,19 @@ Répondez en JSON strict:
       action: safeAction,
       quantity: safeQuantity,
       reason: decision.reason || 'Décision de l\'IA (Recovered)',
-      confidence: Math.min(1, Math.max(0, decision.confidence || 0.5))
+      confidence: Math.min(1, Math.max(0, decision.confidence || 0.5)),
+      debugData
     };
   } catch (error: any) {
     console.error('Premium agent decision failed:', error.message);
-    if (error.cause) console.error('Cause:', error.cause);
+    debugData.error = error.message;
 
     return {
       action: 'HOLD',
       quantity: 0,
       reason: `Erreur lors de la prise de décision: ${error.message}`,
-      confidence: 0
+      confidence: 0,
+      debugData
     };
   }
 }

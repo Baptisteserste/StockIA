@@ -144,7 +144,8 @@ export async function GET(req: NextRequest) {
             quantity,
             price: snapshot.price,
             reason: decision.reason,
-            confidence: decision.confidence
+            confidence: decision.confidence,
+            debugData: decision.debugData ? JSON.parse(JSON.stringify(decision.debugData)) : undefined
           }
         });
 
