@@ -64,7 +64,7 @@ async function exportDebugData() {
                     fearGreedIndex: snap.fearGreedIndex,
                     fearGreedLabel: snap.fearGreedLabel
                 },
-                decisions: snap.decisions.map(d => ({
+                decisions: snap.decisions.map((d: any) => ({
                     botType: d.botType,
                     action: d.action,
                     quantity: d.quantity,
@@ -89,7 +89,8 @@ async function exportDebugData() {
             console.log(`\n  📅 ${new Date(tick.timestamp).toLocaleString('fr-FR')}`);
             console.log(`  💰 Price: $${tick.market.price}`);
             for (const d of tick.decisions) {
-                const hasError = d.debugData?.error ? '❌' : '✅';
+                const debug = d.debugData as any;
+                const hasError = debug?.error ? '❌' : '✅';
                 console.log(`    ${hasError} ${d.botType}: ${d.action} (${d.reason.substring(0, 50)}...)`);
             }
         }
