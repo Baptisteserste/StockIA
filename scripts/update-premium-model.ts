@@ -23,17 +23,17 @@ async function updatePremiumModel() {
         }
 
         console.log(`Found simulation ${activeSim.id} (${activeSim.symbol})`);
-        console.log(`  Current premiumModelId: ${activeSim.premiumModelId}`);
+        console.log(`  Current cheapModelId: ${activeSim.cheapModelId}`);
 
-        // Update le modèle
+        // Update le modèle Cheap vers Qwen3 235B (le plus intelligent gratuit)
         await prisma.simulationConfig.update({
             where: { id: activeSim.id },
             data: {
-                premiumModelId: 'google/gemini-2.5-flash'
+                cheapModelId: 'qwen/qwen3-235b-a22b:free'
             }
         });
 
-        console.log('✅ Premium model updated to: google/gemini-2.5-flash');
+        console.log('✅ Cheap model updated to: qwen/qwen3-235b-a22b:free');
 
     } catch (error) {
         console.error('❌ Update failed:', error);

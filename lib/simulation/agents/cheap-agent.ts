@@ -71,19 +71,53 @@ Répondez en JSON strict:
   };
 
   try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    let currentModel = modelId;
+    let response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: modelId,
+        model: currentModel,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
         max_tokens: 200
       })
     });
+
+    // Fallback si modèle n'existe plus (404)
+    if (response.status === 404) {
+      console.warn(`Model ${modelId} not found, trying fallback...`);
+      const fallbackModels = [
+        'nvidia/nemotron-nano-9b-v2:free',
+        'google/gemma-3n-e4b-it:free',
+        'qwen/qwen3-4b:free'
+      ];
+
+      for (const fallback of fallbackModels) {
+        currentModel = fallback;
+        debugData.model = fallback;
+        response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: fallback,
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.7,
+            max_tokens: 200
+          })
+        });
+
+        if (response.status !== 404) {
+          console.log(`Fallback to ${fallback} successful`);
+          break;
+        }
+      }
+    }
 
     if (!response.ok) {
       debugData.error = `HTTP ${response.status}: ${response.statusText}`;
