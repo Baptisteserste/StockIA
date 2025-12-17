@@ -197,7 +197,7 @@ async function analyzeSentimentWithGemini(symbol: string, news: any[]) {
 
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const headlines = news.map(n => n.headline).join('\n');
     const prompt = `Analyse le sentiment global de ces titres financiers pour ${symbol}.
