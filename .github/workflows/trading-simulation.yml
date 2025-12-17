@@ -2,14 +2,20 @@ name: Trading Simulation Scheduler
 
 on:
   schedule:
-    # Exécution 3 fois par jour, du lundi au vendredi (UTC)
-    # 14h30 Paris (hiver UTC+1) = 13h30 UTC
+    # Exécution 5 fois par jour, du lundi au vendredi (UTC)
+    # 14h30 Paris = 13h30 UTC (Ouverture US 9h30 NY)
     - cron: '30 13 * * 1-5'
 
-    # 18h00 Paris (hiver UTC+1) = 17h00 UTC
+    # 16h00 Paris = 15h00 UTC (11h NY)
+    - cron: '0 15 * * 1-5'
+
+    # 18h00 Paris = 17h00 UTC (12h NY)
     - cron: '0 17 * * 1-5'
 
-    # 21h30 Paris (hiver UTC+1) = 20h30 UTC
+    # 20h00 Paris = 19h00 UTC (14h NY)
+    - cron: '0 19 * * 1-5'
+
+    # 21h30 Paris = 20h30 UTC (15h30 NY, avant close)
     - cron: '30 20 * * 1-5'
 
   # Permet de déclencher manuellement depuis GitHub Actions UI
