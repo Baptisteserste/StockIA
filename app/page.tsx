@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Search, TrendingUp, TrendingDown, Minus, AlertCircle, Lock } from 'lucide-react';
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import Link from 'next/link';
 
 export default function Home() {
   const [symbol, setSymbol] = useState('');
@@ -54,10 +55,10 @@ export default function Home() {
   };
 
   return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+      <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
 
         {/* Main Content */}
-        <main className="container mx-auto px-4 py-12">
+        <main className="flex-grow container mx-auto px-4 py-12">
 
           {/* --- ZONE PROTÉGÉE : Visible seulement si connecté --- */}
           <SignedIn>
@@ -196,16 +197,6 @@ export default function Home() {
           </SignedOut>
 
         </main>
-
-        {/* Footer */}
-        <footer className="border-t border-slate-700 mt-20 py-8">
-          <div className="container mx-auto px-4 text-center text-slate-500 text-sm">
-            <p>© 2025 StockIA - Analyse de sentiment financier</p>
-            <p className="mt-2">
-              ⚠️ Cette application ne fournit pas de conseils financiers ou d'investissement.
-            </p>
-          </div>
-        </footer>
       </div>
   );
 }
