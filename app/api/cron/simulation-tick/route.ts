@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Exécuter les agents en parallèle
-    const [cheapResult, premiumResult] = await Promise.all([
+    const [cheapResult, premiumResult, algoResult] = await Promise.all([
       cheapAgent.decide(
         { ...snapshot, simulationId: config.id },
         cheapPortfolio,
