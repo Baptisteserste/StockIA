@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Exécuter les agents en parallèle
-    const [cheapResult, premiumResult, algoResult] = await Promise.all([
+    const [cheapResult, premiumResult] = await Promise.all([
       cheapAgent.decide(
         { ...snapshot, simulationId: config.id },
         cheapPortfolio,
@@ -145,6 +145,8 @@ export async function GET(req: NextRequest) {
             price: snapshot.price,
             reason: decision.reason,
             confidence: decision.confidence,
+            tokens: (decision as any).tokens || 0,
+            cost: (decision as any).cost || 0,
             debugData: decision.debugData ? JSON.parse(JSON.stringify(decision.debugData)) : undefined
           }
         });

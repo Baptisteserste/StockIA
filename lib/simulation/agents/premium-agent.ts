@@ -6,6 +6,8 @@ interface DecisionResult {
   quantity: number;
   reason: string;
   confidence: number;
+  tokens?: number;
+  cost?: number;
   debugData?: DebugData;
 }
 
@@ -169,6 +171,8 @@ Répondez en JSON strict:
       quantity: safeQuantity,
       reason: decision.reason || 'Décision de l\'IA (Recovered)',
       confidence: Math.min(1, Math.max(0, decision.confidence || 0.5)),
+      tokens: debugData.totalTokens || 0,
+      cost: debugData.cost || 0,
       debugData
     };
   } catch (error: any) {
@@ -180,6 +184,8 @@ Répondez en JSON strict:
       quantity: 0,
       reason: `Erreur lors de la prise de décision: ${error.message}`,
       confidence: 0,
+      tokens: 0,
+      cost: 0,
       debugData
     };
   }

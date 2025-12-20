@@ -19,6 +19,8 @@ export interface DecisionResult {
   quantity: number;
   reason: string;
   confidence: number;
+  tokens: number; // AJOUT
+  cost: number;   // AJOUT
 }
 
 export interface MarketSnapshot {
@@ -462,7 +464,9 @@ export function decide(
           action: 'SELL',
           quantity: sellQty,
           reason: riskCheck.reason,
-          confidence: 0.95 // Haute confiance pour les règles automatiques
+          confidence: 0.95,
+          tokens: 0,
+          cost: 0
         };
       }
     }
@@ -531,7 +535,9 @@ export function decide(
           action: 'BUY',
           quantity,
           reason: `${emoji} Score: ${compositeScore.toFixed(2)} | ${signalSummary}`,
-          confidence
+          confidence,
+          tokens: 0,
+          cost: 0
         };
       }
     }
@@ -569,7 +575,9 @@ export function decide(
       action: 'SELL',
       quantity,
       reason: `📉 Score: ${compositeScore.toFixed(2)} | ${signalSummary}`,
-      confidence
+      confidence,
+      tokens: 0,
+      cost: 0
     };
   }
 
@@ -582,7 +590,9 @@ export function decide(
     action: 'HOLD',
     quantity: 0,
     reason: `⏳ ${holdReason}`,
-    confidence: 0.5
+    confidence: 0.5,
+    tokens: 0,
+    cost: 0
   };
 }
 

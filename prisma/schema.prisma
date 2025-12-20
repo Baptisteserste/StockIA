@@ -8,11 +8,12 @@ datasource db {
 }
 
 model User {
-  id        String        @id @unique
-  email     String
-  credits   Int           @default(10)
-  createdAt DateTime      @default(now())
-  analyses  AnalysisLog[]
+  id          String             @id @unique
+  email       String
+  credits     Int                @default(10)
+  createdAt   DateTime           @default(now())
+  analyses    AnalysisLog[]
+  simulations SimulationConfig[]
 }
 
 model AnalysisLog {
@@ -35,12 +36,13 @@ model SimulationConfig {
   useReddit      Boolean          @default(false)
   status         SimulationStatus @default(IDLE)
   currentDay     Int              @default(0)
+  durationDays   Int              @default(21)
   createdBy      String?
+  user           User?            @relation(fields: [createdBy], references: [id])
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  durationDays   Int              @default(21)
-  snapshots      MarketSnapshot[]
   portfolios     Portfolio[]
+  snapshots      MarketSnapshot[]
 
   @@index([status])
 }
@@ -82,16 +84,18 @@ model MarketSnapshot {
 model BotDecision {
   id         String         @id @default(cuid())
   snapshotId String
+  snapshot   MarketSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
   botType    BotType
   action     TradeAction
   quantity   Float
   price      Float
   reason     String
   confidence Float?
+  tokens     Int            @default(0)
+  cost       Float          @default(0)
+  debugData  Json?
   algoConfig Json?
-  debugData  Json?          // Raw debug data: tokens, finish_reason, raw response, errors
   createdAt  DateTime       @default(now())
-  snapshot   MarketSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
 
   @@index([botType, createdAt])
 }

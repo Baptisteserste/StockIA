@@ -70,7 +70,9 @@ export async function GET() {
           price: d.price,
           reason: d.reason,
           confidence: d.confidence,
-          timestamp: snap.timestamp
+          timestamp: snap.timestamp,
+          tokens: d.tokens,
+          cost: d.cost
         }))
       ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 

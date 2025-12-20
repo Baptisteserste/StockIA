@@ -13,30 +13,53 @@ export default async function DashboardPage() {
         redirect("/sign-in");
     }
 
-    // 2. Récupérer OU Créer l'utilisateur (UPSERT)
-    const user = await prisma.user.upsert({
-        where: { id: userId },
-        // Si l'utilisateur existe déjà, on ne fait rien (update vide), on le récupère juste
-        update: {},
-        // Si l'utilisateur n'existe pas, on le crée
-        create: {
-            id: userId,
-            email: userClerk.emailAddresses[0].emailAddress,
-            credits: 10, // Bonus de bienvenue
-        },
-        include: {
-            analyses: {
-                orderBy: { createdAt: 'desc' }
+        const user = await prisma.user.upsert({
+            where: { id: userId },
+            update: {},
+            create: {
+                id: userId,
+                email: userClerk.emailAddresses[0].emailAddress,
+                credits: 10,
+            },
+            include: {
+                analyses: {
+                    orderBy: { createdAt: 'desc' }
+                },
+                // AJOUT : On récupère les simulations pour inclure leurs coûts
+                simulations: {
+                    include: {
+                        snapshots: {
+                            include: {
+                                decisions: true
+                            }
+                        }
+                    }
+                }
             }
-        }
-    });
+        });
 
-    // 3. Calcul des totaux de ressources
-    const totalTokens = user.analyses.reduce((acc, log) => acc + log.tokens, 0);
-    const totalCost = user.analyses.reduce((acc, log) => acc + log.cost, 0);
+        // 3. Calcul des totaux de ressources consolidés
+        const analysisTokens = user.analyses.reduce((acc, log) => acc + log.tokens, 0);
+        const analysisCost = user.analyses.reduce((acc, log) => acc + log.cost, 0);
 
-    return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 p-8">
+        // Calculer le coût généré par les bots dans les simulations
+        let simulationTokens = 0;
+        let simulationCost = 0;
+
+        user.simulations.forEach(sim => {
+            sim.snapshots.forEach(snap => {
+                snap.decisions.forEach(dec => {
+                    simulationTokens += (dec as any).tokens || 0;
+                    simulationCost += (dec as any).cost || 0;
+                });
+            });
+        });
+
+        const totalTokens = analysisTokens + simulationTokens;
+        const totalCost = analysisCost + simulationCost;
+
+        return (
+            <div className="min-h-screen bg-slate-950 text-slate-100 p-8">
             <div className="max-w-6xl mx-auto">
 
                 {/* Header */}
