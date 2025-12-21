@@ -182,17 +182,56 @@ export default function Home() {
 
           {/* --- ZONE PUBLIQUE : Visible seulement si NON connecté --- */}
           <SignedOut>
-            <div className="max-w-xl mx-auto text-center py-20 bg-slate-800/50 rounded-2xl border border-slate-700 mt-10">
-              <Lock className="w-16 h-16 mx-auto text-slate-600 mb-6" />
-              <h2 className="text-2xl font-bold text-white mb-4">Authentification requise</h2>
-              <p className="text-slate-400 mb-8 px-6">
-                Connectez-vous pour accéder à l'outil d'analyse de sentiment par IA et obtenir des insights en temps réel sur vos actions préférées.
-              </p>
-              <SignInButton mode="modal">
-                <button className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-blue-900/20">
-                  Se connecter pour analyser
-                </button>
-              </SignInButton>
+            <div className="py-20">
+              <div className="max-w-4xl mx-auto text-center mb-16">
+                <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-8 tracking-tight">
+                  L'IA au service de votre <span className="text-blue-500">stratégie</span>
+                </h1>
+                <p className="text-xl text-slate-400 mb-10 leading-relaxed">
+                  Analysez instantanément le sentiment du marché et simulez vos investissements avec nos agents intelligents.
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center gap-4">
+                  <SignInButton mode="modal">
+                    <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-900/40 text-lg cursor-pointer">
+                      Essayer maintenant
+                    </button>
+                  </SignInButton>
+                  <Link href="/pricing" className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all border border-slate-700 text-lg">
+                    Voir les tarifs
+                  </Link>
+                </div>
+              </div>
+
+              {/* Demo Section */}
+              <div className="max-w-5xl mx-auto mb-20 p-2 bg-slate-800/50 rounded-3xl border border-slate-700 shadow-2xl overflow-hidden">
+                <div className="aspect-video bg-slate-950 rounded-2xl flex items-center justify-center relative">
+                   <div className="text-center">
+                     <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <div className="w-0 h-0 border-y-[10px] border-y-transparent border-l-[16px] border-l-white ml-1"></div>
+                     </div>
+                     <p className="text-slate-500 font-medium italic">Démo interactive (Vidéo/GIF à insérer)</p>
+                   </div>
+                </div>
+              </div>
+
+              {/* Benefits Section */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <div className="p-8 bg-slate-900/50 border border-slate-800 rounded-2xl">
+                  <div className="text-3xl mb-4">⚡</div>
+                  <h3 className="text-xl font-bold text-white mb-2">Vitesse Pure</h3>
+                  <p className="text-slate-400">Synthétisez des jours d'actualités en quelques secondes seulement.</p>
+                </div>
+                <div className="p-8 bg-slate-900/50 border border-slate-800 rounded-2xl">
+                  <div className="text-3xl mb-4">📊</div>
+                  <h3 className="text-xl font-bold text-white mb-2">Insights Clairs</h3>
+                  <p className="text-slate-400">Des scores de sentiment précis basés sur des sources financières fiables.</p>
+                </div>
+                <div className="p-8 bg-slate-900/50 border border-slate-800 rounded-2xl">
+                  <div className="text-3xl mb-4">🧪</div>
+                  <h3 className="text-xl font-bold text-white mb-2">Simulations</h3>
+                  <p className="text-slate-400">Testez l'efficacité des agents IA face aux algorithmes classiques.</p>
+                </div>
+              </div>
             </div>
           </SignedOut>
 

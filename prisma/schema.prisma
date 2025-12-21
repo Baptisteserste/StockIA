@@ -11,9 +11,10 @@ model User {
   id          String             @id @unique
   email       String
   credits     Int                @default(10)
+  lastRefill  DateTime           @default(now()) // Pour la recharge quotidienne
   createdAt   DateTime           @default(now())
   analyses    AnalysisLog[]
-  simulations SimulationConfig[]
+  simulations SimulationConfig[] // AJOUT : Relation inverse vers SimulationConfig
 }
 
 model AnalysisLog {
@@ -38,7 +39,7 @@ model SimulationConfig {
   currentDay     Int              @default(0)
   durationDays   Int              @default(21)
   createdBy      String?
-  user           User?            @relation(fields: [createdBy], references: [id])
+  user           User?            @relation(fields: [createdBy], references: [id]) // Cette ligne causait l'erreur
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   portfolios     Portfolio[]

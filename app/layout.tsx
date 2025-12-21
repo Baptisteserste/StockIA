@@ -45,6 +45,13 @@ export default function RootLayout({
                 <div className="flex items-center gap-4">
               
                   <Link 
+                    href="/pricing"
+                    className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+                  >
+                    Pricing
+                  </Link>
+
+                  <Link 
                     href="/"
                     className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-colors text-sm font-semibold"
                   >
