@@ -83,22 +83,22 @@ const CONFIG = {
   TRAILING_STOP_PERCENT: 0.03,    // -3% trailing stop
   TAKE_PROFIT_1: 0.15,            // +15% → vend 50%
   TAKE_PROFIT_2: 0.25,            // +25% → vend tout
-  
+
   // Position Sizing
   MIN_POSITION_PERCENT: 0.05,     // Min 5% du capital
   MAX_POSITION_PERCENT: 0.25,     // Max 25% du capital
   DEFAULT_POSITION_PERCENT: 0.10, // Par défaut 10%
-  
+
   // Score Weights
   WEIGHT_TECHNICAL: 0.40,         // 40% technique
   WEIGHT_SENTIMENT: 0.40,         // 40% sentiment (Stocktwits + Gemini)
   WEIGHT_FEAR_GREED: 0.20,        // 20% Fear & Greed
-  
+
   // Thresholds
-  BUY_THRESHOLD: 0.35,            // Score > 0.35 pour acheter
-  SELL_THRESHOLD: -0.35,          // Score < -0.35 pour vendre
-  STRONG_BUY_THRESHOLD: 0.60,     // Score > 0.6 = position plus grosse
-  
+  BUY_THRESHOLD: 0.15,            // Score > 0.15 pour acheter (était 0.35)
+  SELL_THRESHOLD: -0.15,          // Score < -0.15 pour vendre (était -0.35)
+  STRONG_BUY_THRESHOLD: 0.40,     // Score > 0.4 = position plus grosse (était 0.6)
+
   // Bollinger
   BOLLINGER_OVERSOLD: 0.2,        // Prix sous 20% de la bande
   BOLLINGER_OVERBOUGHT: 0.8,      // Prix au-dessus 80% de la bande
@@ -207,7 +207,7 @@ function calculateTechnicalScore(snapshot: MarketSnapshot): { score: number; sig
     factors++;
     const range = snapshot.bollingerUpper - snapshot.bollingerLower;
     const position = (snapshot.price - snapshot.bollingerLower) / range;
-    
+
     if (position < CONFIG.BOLLINGER_OVERSOLD) {
       score += 0.8;
       signals.push(`Prix sous Bollinger (${(position * 100).toFixed(0)}%)`);
@@ -215,7 +215,7 @@ function calculateTechnicalScore(snapshot: MarketSnapshot): { score: number; sig
       score -= 0.8;
       signals.push(`Prix au-dessus Bollinger (${(position * 100).toFixed(0)}%)`);
     }
-    
+
     // Squeeze = faible volatilité = breakout potentiel
     if (snapshot.bollingerWidth && snapshot.bollingerWidth < 0.02) {
       signals.push('Bollinger squeeze (breakout proche)');
@@ -253,7 +253,7 @@ function calculateSentimentScore(snapshot: MarketSnapshot): { score: number; sig
       // Convertir ratio 0-1 en score -1 à +1
       const stocktwitsScore = (bullRatio - 0.5) * 2;
       score += stocktwitsScore;
-      
+
       if (bullRatio > 0.65) {
         signals.push(`Stocktwits très bullish (${(bullRatio * 100).toFixed(0)}% bulls)`);
       } else if (bullRatio > 0.55) {
@@ -275,16 +275,16 @@ function calculateSentimentScore(snapshot: MarketSnapshot): { score: number; sig
 function calculateFearGreedScore(snapshot: MarketSnapshot): { score: number; signals: string[] } {
   const signals: string[] = [];
   const index = snapshot.fearGreedIndex;
-  
+
   if (index === undefined || index === null) {
     return { score: 0, signals: [] };
   }
 
   // Stratégie CONTRARIAN : acheter quand les autres ont peur
   // Fear & Greed va de 0 (Extreme Fear) à 100 (Extreme Greed)
-  
+
   let score = 0;
-  
+
   if (index < 20) {
     // Extreme Fear = BUY signal (contrarian)
     score = 0.8;
@@ -311,37 +311,37 @@ function calculateFearGreedScore(snapshot: MarketSnapshot): { score: number; sig
 // ============== POSITION SIZING (Kelly Criterion) ==============
 
 function calculatePositionSize(
-  cash: number, 
-  price: number, 
+  cash: number,
+  price: number,
   confidence: number,
   atrPercent?: number
 ): number {
   // Kelly Criterion simplifié: f* = (bp - q) / b
   // où b = gain potentiel, p = proba de gagner, q = 1-p
-  
+
   // On utilise la confidence comme proxy de probabilité
   const winProb = 0.5 + (confidence * 0.3); // 50-80% selon confidence
   const winRatio = 1.5; // On vise 1.5x gains vs pertes
-  
+
   const kelly = (winProb * winRatio - (1 - winProb)) / winRatio;
-  
+
   // Limiter Kelly (souvent trop agressif)
   const halfKelly = Math.max(0, kelly * 0.5);
-  
+
   // Position en % du capital
   let positionPercent = Math.max(
     CONFIG.MIN_POSITION_PERCENT,
     Math.min(CONFIG.MAX_POSITION_PERCENT, halfKelly)
   );
-  
+
   // Réduire la taille si volatilité élevée (ATR > 3%)
   if (atrPercent && atrPercent > 3) {
     positionPercent *= 0.7;
   }
-  
+
   const positionValue = cash * positionPercent;
   const quantity = Math.floor(positionValue / price);
-  
+
   return quantity;
 }
 
@@ -441,17 +441,17 @@ export function decide(
   if (state.position && state.position.quantity > 0) {
     const atrPct = snapshot.atrPercent ?? undefined;
     const riskCheck = checkRiskManagement(state.position, price, atrPct);
-    
+
     if (riskCheck.shouldSell) {
       const sellQty = Math.min(riskCheck.sellQuantity, shares);
-      
+
       if (sellQty > 0) {
         // Mettre à jour l'état
         state.position.quantity -= sellQty;
         if (state.position.quantity <= 0) {
           state.position = null;
         }
-        
+
         state.tradeHistory.push({
           type: 'SELL',
           price,
@@ -459,7 +459,7 @@ export function decide(
           timestamp: Date.now(),
           pnl: (price - (state.position?.entryPrice || price)) * sellQty
         });
-        
+
         return {
           action: 'SELL',
           quantity: sellQty,
@@ -477,7 +477,7 @@ export function decide(
   const sentiment = calculateSentimentScore(snapshot);
   const fearGreed = calculateFearGreedScore(snapshot);
 
-  const compositeScore = 
+  const compositeScore =
     technical.score * CONFIG.WEIGHT_TECHNICAL +
     sentiment.score * CONFIG.WEIGHT_SENTIMENT +
     fearGreed.score * CONFIG.WEIGHT_FEAR_GREED;
@@ -491,21 +491,21 @@ export function decide(
     const currentValue = shares * price;
     const totalValue = cash + currentValue;
     const currentAllocation = currentValue / totalValue;
-    
+
     if (currentAllocation < CONFIG.MAX_POSITION_PERCENT) {
       // Position sizing
       const confidence = Math.min((compositeScore - CONFIG.BUY_THRESHOLD) / 0.5, 1);
       const atrPct = snapshot.atrPercent ?? undefined;
       let quantity = calculatePositionSize(cash, price, confidence, atrPct);
-      
+
       // Augmenter position si signal très fort
       if (compositeScore > CONFIG.STRONG_BUY_THRESHOLD) {
         quantity = Math.floor(quantity * 1.5);
       }
-      
+
       // Ne pas dépasser le cash disponible
       quantity = Math.min(quantity, Math.floor(cash / price));
-      
+
       if (quantity > 0) {
         // Créer ou mettre à jour la position
         if (!state.position) {
@@ -518,18 +518,18 @@ export function decide(
         } else {
           // Moyenner le prix d'entrée
           const totalQty = state.position.quantity + quantity;
-          state.position.entryPrice = 
+          state.position.entryPrice =
             (state.position.entryPrice * state.position.quantity + price * quantity) / totalQty;
           state.position.quantity = totalQty;
         }
-        
+
         state.tradeHistory.push({
           type: 'BUY',
           price,
           quantity,
           timestamp: Date.now()
         });
-        
+
         const emoji = compositeScore > CONFIG.STRONG_BUY_THRESHOLD ? '🚀' : '📈';
         return {
           action: 'BUY',
@@ -546,7 +546,7 @@ export function decide(
   // ========== SELL DECISION (Signal-based) ==========
   if (compositeScore < CONFIG.SELL_THRESHOLD && shares > 0) {
     const confidence = Math.min((Math.abs(compositeScore) - Math.abs(CONFIG.SELL_THRESHOLD)) / 0.5, 1);
-    
+
     // Vendre proportionnellement à la force du signal
     let sellPercent = 0.3; // Par défaut 30%
     if (compositeScore < -0.6) {
@@ -554,23 +554,23 @@ export function decide(
     } else if (compositeScore < -0.5) {
       sellPercent = 0.5; // Signal moyen = 50%
     }
-    
+
     const quantity = Math.max(1, Math.floor(shares * sellPercent));
-    
+
     if (state.position) {
       state.position.quantity -= quantity;
       if (state.position.quantity <= 0) {
         state.position = null;
       }
     }
-    
+
     state.tradeHistory.push({
       type: 'SELL',
       price,
       quantity,
       timestamp: Date.now()
     });
-    
+
     return {
       action: 'SELL',
       quantity,
@@ -582,7 +582,7 @@ export function decide(
   }
 
   // ========== HOLD ==========
-  const holdReason = state.position 
+  const holdReason = state.position
     ? `Position ouverte à $${state.position.entryPrice.toFixed(2)} | Score: ${compositeScore.toFixed(2)}`
     : `Attente signal | Score: ${compositeScore.toFixed(2)}`;
 

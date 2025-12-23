@@ -37,6 +37,8 @@ interface MarketSnapshotData {
   // ATR
   atr: number | null;
   atrPercent: number | null;
+  // News headlines pour les agents LLM
+  newsHeadlines?: string[];
 }
 
 async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
@@ -341,7 +343,10 @@ export async function createMarketSnapshot(
 
     // ATR
     atr: advancedIndicators?.atr ?? null,
-    atrPercent: advancedIndicators?.atrPercent ?? null
+    atrPercent: advancedIndicators?.atrPercent ?? null,
+
+    // News headlines pour les agents LLM (5 derniers titres)
+    newsHeadlines: finnhubData.news.slice(0, 5).map((n: any) => n.headline)
   };
 
   // Insérer en base avec retry

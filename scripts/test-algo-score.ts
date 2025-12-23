@@ -15,8 +15,8 @@ const CONFIG = {
     WEIGHT_TECHNICAL: 0.40,   // 40% du score
     WEIGHT_SENTIMENT: 0.40,   // 40% du score
     WEIGHT_FEAR_GREED: 0.20,  // 20% du score
-    BUY_THRESHOLD: 0.35,
-    SELL_THRESHOLD: -0.35,
+    BUY_THRESHOLD: 0.15,      // Nouveau seuil (était 0.35)
+    SELL_THRESHOLD: -0.15,    // Nouveau seuil (était -0.35)
 };
 
 function calculateTechnicalScore(rsi: number | null, macd: number | null, macdHistogram?: number | null): { score: number; details: string[] } {

@@ -28,6 +28,7 @@ interface MarketSnapshot {
   macd: number | null;
   sentimentScore: number;
   sentimentReason: string;
+  newsHeadlines?: string[];  // Titres des dernières news
 }
 
 interface Portfolio {
@@ -43,8 +44,12 @@ export async function decide(
   const context = snapshot.simulationId
     ? await getBotContext(snapshot.simulationId, 'CHEAP', 3)
     : "Première décision de trading.";
+  // Préparer les headlines pour le prompt
+  const headlinesText = snapshot.newsHeadlines?.length
+    ? snapshot.newsHeadlines.slice(0, 5).map((h, i) => `  ${i + 1}. ${h}`).join('\n')
+    : '  Aucune actualité récente';
 
-  const prompt = `Vous êtes un trader. 
+  const prompt = `Vous êtes un trader actif. 
 
 Contexte précédent:
 ${context}
@@ -55,17 +60,21 @@ Données actuelles:
 - MACD: ${snapshot.macd ?? 'N/A'}
 - Sentiment: ${snapshot.sentimentScore} (${snapshot.sentimentReason})
 
+Actualités récentes (ANALYSEZ-LES pour votre décision):
+${headlinesText}
+
 Votre portefeuille:
 - Cash: ${portfolio.cash}$
 - Actions: ${portfolio.shares}
 
-Règles:
-- LONG-ONLY: Ne vendez que si vous possédez des actions (shares > 0)
-- Si RSI/MACD sont "N/A", soyez plus prudent mais essayez quand même de prendre une décision basée sur le sentiment et le prix
-- Décidez intelligemment entre BUY, SELL ou HOLD
+Règles de trading (SUIVEZ-LES STRICTEMENT) :
+1. ACHETEZ si: sentiment > 0.3 OU RSI < 40 OU actualités positives
+2. VENDEZ si vous avez des actions ET: RSI > 65 OU sentiment < -0.2 OU actualités négatives
+3. Ne faites PAS HOLD tout le temps - soyez actif !
+4. Quantité: utilisez 20-50% de votre cash pour acheter, vendez 50-100% de vos actions
 
 Répondez en JSON strict:
-{"action": "BUY"|"SELL"|"HOLD", "quantity": nombre, "reason": "explication courte", "confidence": 0-1}`;
+{"action": "BUY"|"SELL"|"HOLD", "quantity": nombre, "reason": "explication courte basée sur les actualités", "confidence": 0-1}`;
 
   const debugData: DebugData = {
     model: modelId,
