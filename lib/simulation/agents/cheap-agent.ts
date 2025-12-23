@@ -42,7 +42,7 @@ export async function decide(
     ? await getBotContext(snapshot.simulationId, 'CHEAP', 3)
     : "Première décision de trading.";
 
-  const prompt = `Vous êtes un trader. 
+  const prompt = `Vous êtes un trader actif. 
 
 Contexte précédent:
 ${context}
@@ -57,10 +57,11 @@ Votre portefeuille:
 - Cash: ${portfolio.cash}$
 - Actions: ${portfolio.shares}
 
-Règles:
-- LONG-ONLY: Ne vendez que si vous possédez des actions (shares > 0)
-- Si RSI/MACD sont "N/A", soyez plus prudent mais essayez quand même de prendre une décision basée sur le sentiment et le prix
-- Décidez intelligemment entre BUY, SELL ou HOLD
+Règles de trading (SUIVEZ-LES STRICTEMENT) :
+1. ACHETEZ si: sentiment > 0.3 OU RSI < 40 OU MACD en amélioration
+2. VENDEZ si vous avez des actions ET: RSI > 65 OU sentiment < -0.2 OU vous êtes en profit
+3. Ne faites PAS HOLD tout le temps - soyez actif !
+4. Quantité: utilisez 20-50% de votre cash pour acheter, vendez 50-100% de vos actions
 
 Répondez en JSON strict:
 {"action": "BUY"|"SELL"|"HOLD", "quantity": nombre, "reason": "explication courte", "confidence": 0-1}`;

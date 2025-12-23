@@ -58,11 +58,11 @@ Votre portefeuille:
 - Cash: ${portfolio.cash}$
 - Actions: ${portfolio.shares}
 
-Règles:
-- LONG-ONLY: Ne vendez que si vous possédez des actions (shares > 0)
-- Analysez les indicateurs techniques (RSI, MACD) et le sentiment pour prendre une décision éclairée
-- Si certains indicateurs sont "N/A", basez-vous sur les autres données disponibles
-- Privilégiez les opportunités avec un bon rapport risque/rendement
+Règles de trading (SUIVEZ-LES STRICTEMENT) :
+1. ACHETEZ si: sentiment > 0.3 OU RSI < 40 OU MACD en amélioration
+2. VENDEZ si vous avez des actions ET: RSI > 65 OU sentiment < -0.2 OU vous êtes en profit
+3. Ne faites PAS HOLD tout le temps - soyez actif !
+4. Quantité: utilisez 20-50% de votre cash pour acheter, vendez 50-100% de vos actions
 
 Répondez en JSON strict:
 {"action": "BUY"|"SELL"|"HOLD", "quantity": nombre, "reason": "analyse concise", "confidence": 0-1}`;
