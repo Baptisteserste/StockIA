@@ -109,45 +109,61 @@ export async function GET(req: NextRequest) {
 
     // Exécuter en transaction
     await prisma.$transaction(async (tx) => {
+      // Récupérer le snapshot créé
+      const dbSnapshot = await tx.marketSnapshot.findFirst({
+        where: {
+          simulationId: config.id,
+          symbol: config.symbol
+        },
+        orderBy: { timestamp: 'desc' }
+      });
+
+      if (!dbSnapshot) {
+        throw new Error('Snapshot not found in database');
+      }
+
       for (const decision of decisions) {
         const { action, quantity, portfolio } = decision;
 
-        // Validation
+        // Vérifier si l'action peut être exécutée
+        let actualAction = action;
+        let actualQuantity = quantity;
+        let actualReason = decision.reason;
+        let skipped = false;
+
         if (action === 'BUY' && quantity * snapshot.price > portfolio.cash) {
           console.warn(`${decision.botType}: BUY order skipped (insufficient funds)`);
-          continue;
+          actualAction = 'HOLD';
+          actualQuantity = 0;
+          actualReason = `BUY demandé mais fonds insuffisants (${quantity} @ $${snapshot.price.toFixed(2)} > $${portfolio.cash.toFixed(2)} cash)`;
+          skipped = true;
         }
         if (action === 'SELL' && (quantity > portfolio.shares || portfolio.shares === 0)) {
           console.warn(`${decision.botType}: SELL order skipped (insufficient shares)`);
-          continue;
+          actualAction = 'HOLD';
+          actualQuantity = 0;
+          actualReason = `SELL demandé mais actions insuffisantes (${quantity} demandé, ${portfolio.shares} disponibles)`;
+          skipped = true;
         }
 
-        // Récupérer le snapshot créé
-        const dbSnapshot = await tx.marketSnapshot.findFirst({
-          where: {
-            simulationId: config.id,
-            symbol: config.symbol
-          },
-          orderBy: { timestamp: 'desc' }
-        });
-
-        if (!dbSnapshot) {
-          throw new Error('Snapshot not found in database');
-        }
-
-        // Insérer la décision
+        // TOUJOURS insérer la décision (même si skipped)
         await tx.botDecision.create({
           data: {
             snapshotId: dbSnapshot.id,
             botType: decision.botType as 'CHEAP' | 'PREMIUM' | 'ALGO',
-            action,
-            quantity,
+            action: actualAction,
+            quantity: actualQuantity,
             price: snapshot.price,
-            reason: decision.reason,
+            reason: actualReason,
             confidence: decision.confidence,
             debugData: decision.debugData ? JSON.parse(JSON.stringify(decision.debugData)) : undefined
           }
         });
+
+        // Si skipped ou HOLD, ne pas mettre à jour le portfolio
+        if (skipped || actualAction === 'HOLD') {
+          continue;
+        }
 
         // Calculer nouveau portfolio
         const newShares = action === 'BUY'
