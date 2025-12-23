@@ -48,6 +48,10 @@ export async function decide(
     ? snapshot.newsHeadlines.slice(0, 5).map((h, i) => `  ${i + 1}. ${h}`).join('\n')
     : '  Aucune actualité récente';
 
+  // Calculer la quantité max achetable
+  const maxBuyQuantity = Math.floor(portfolio.cash / snapshot.price);
+  const suggestedBuyQty = Math.floor(maxBuyQuantity * 0.3); // 30% du max
+
   const prompt = `Vous êtes un trader professionnel expérimenté.
 
 Contexte précédent:
@@ -63,17 +67,20 @@ Actualités récentes (ANALYSEZ-LES pour votre décision):
 ${headlinesText}
 
 Votre portefeuille:
-- Cash: ${portfolio.cash}$
+- Cash: ${portfolio.cash.toFixed(2)}$
 - Actions: ${portfolio.shares}
+- MAXIMUM ACHETABLE: ${maxBuyQuantity} actions (avec votre cash actuel)
+- QUANTITÉ SUGGÉRÉE pour BUY: ${suggestedBuyQty} actions (30% du cash)
 
-Règles de trading (SUIVEZ-LES STRICTEMENT) :
-1. ACHETEZ si: sentiment > 0.3 OU RSI < 40 OU actualités très positives
-2. VENDEZ si vous avez des actions ET: RSI > 65 OU sentiment < -0.2 OU actualités négatives
-3. Ne faites PAS HOLD tout le temps - soyez actif !
-4. Quantité: utilisez 20-50% de votre cash pour acheter, vendez 50-100% de vos actions
+⚠️ RÈGLES CRITIQUES:
+1. Pour BUY: La quantité DOIT être <= ${maxBuyQuantity} (sinon ordre rejeté!)
+2. Pour SELL: La quantité DOIT être <= ${portfolio.shares}
+3. ACHETEZ si sentiment > 0.3 OU RSI < 40 OU actualités positives
+4. VENDEZ si RSI > 65 OU sentiment < -0.2 OU actualités négatives
+5. Soyez actif, évitez HOLD systématique
 
 Répondez en JSON strict:
-{"action": "BUY"|"SELL"|"HOLD", "quantity": nombre, "reason": "analyse concise basée sur les actualités", "confidence": 0-1}`;
+{"action": "BUY"|"SELL"|"HOLD", "quantity": nombre_entier, "reason": "analyse concise", "confidence": 0-1}`;
 
   const debugData: DebugData = {
     model: modelId,

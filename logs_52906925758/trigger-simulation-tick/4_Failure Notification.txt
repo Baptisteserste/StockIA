@@ -1,5 +1,0 @@
-﻿2025-12-23T13:53:01.9320278Z ##[group]Run echo "❌ Simulation tick failed - check logs"
-2025-12-23T13:53:01.9320776Z [36;1mecho "❌ Simulation tick failed - check logs"[0m
-2025-12-23T13:53:01.9353746Z shell: /usr/bin/bash -e {0}
-2025-12-23T13:53:01.9354042Z ##[endgroup]
-2025-12-23T13:53:01.9498904Z ❌ Simulation tick failed - check logs
