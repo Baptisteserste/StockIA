@@ -1,0 +1,59 @@
+﻿2025-12-23T13:52:49.1526592Z Current runner version: '2.330.0'
+2025-12-23T13:52:49.1554775Z ##[group]Runner Image Provisioner
+2025-12-23T13:52:49.1555980Z Hosted Compute Agent
+2025-12-23T13:52:49.1557002Z Version: 20251211.462
+2025-12-23T13:52:49.1558112Z Commit: 6cbad8c2bb55d58165063d031ccabf57e2d2db61
+2025-12-23T13:52:49.1559458Z Build Date: 2025-12-11T16:28:49Z
+2025-12-23T13:52:49.1560685Z Worker ID: {97440aea-0013-4a5a-8a96-b0c699dfe1c8}
+2025-12-23T13:52:49.1561729Z ##[endgroup]
+2025-12-23T13:52:49.1562280Z ##[group]Operating System
+2025-12-23T13:52:49.1562829Z Ubuntu
+2025-12-23T13:52:49.1563388Z 24.04.3
+2025-12-23T13:52:49.1563865Z LTS
+2025-12-23T13:52:49.1564358Z ##[endgroup]
+2025-12-23T13:52:49.1564955Z ##[group]Runner Image
+2025-12-23T13:52:49.1565523Z Image: ubuntu-24.04
+2025-12-23T13:52:49.1566037Z Version: 20251215.174.1
+2025-12-23T13:52:49.1567151Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251215.174/images/ubuntu/Ubuntu2404-Readme.md
+2025-12-23T13:52:49.1569031Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251215.174
+2025-12-23T13:52:49.1570134Z ##[endgroup]
+2025-12-23T13:52:49.1571260Z ##[group]GITHUB_TOKEN Permissions
+2025-12-23T13:52:49.1573442Z Contents: read
+2025-12-23T13:52:49.1574041Z Metadata: read
+2025-12-23T13:52:49.1574593Z Packages: read
+2025-12-23T13:52:49.1575249Z ##[endgroup]
+2025-12-23T13:52:49.1577294Z Secret source: Actions
+2025-12-23T13:52:49.1578616Z Prepare workflow directory
+2025-12-23T13:52:49.2036094Z Prepare all required actions
+2025-12-23T13:52:49.2175270Z Complete job name: trigger-simulation-tick
+2025-12-23T13:52:49.3057039Z ##[group]Run if [ -z "$VERCEL_APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+2025-12-23T13:52:49.3058090Z [36;1mif [ -z "$VERCEL_APP_URL" ] || [ -z "$CRON_SECRET" ]; then[0m
+2025-12-23T13:52:49.3059465Z [36;1m  echo "::error::VERCEL_APP_URL ou CRON_SECRET non défini dans les secrets GitHub"[0m
+2025-12-23T13:52:49.3060332Z [36;1m  exit 1[0m
+2025-12-23T13:52:49.3060817Z [36;1mfi[0m
+2025-12-23T13:52:49.3061726Z [36;1mresponse=$(curl -s -L -w "\n%{http_code}" -X GET \[0m
+2025-12-23T13:52:49.3062529Z [36;1m  "$VERCEL_APP_URL/api/cron/simulation-tick" \[0m
+2025-12-23T13:52:49.3063436Z [36;1m  -H "Authorization: ***")[0m
+2025-12-23T13:52:49.3064217Z [36;1mhttp_code=$(echo "$response" | tail -n1)[0m
+2025-12-23T13:52:49.3064886Z [36;1mbody=$(echo "$response" | head -n-1)[0m
+2025-12-23T13:52:49.3065542Z [36;1mecho "HTTP Status: $http_code"[0m
+2025-12-23T13:52:49.3066292Z [36;1mecho "Response Body: $body"[0m
+2025-12-23T13:52:49.3067042Z [36;1mif [ "$http_code" -ne 200 ]; then[0m
+2025-12-23T13:52:49.3067860Z [36;1m  echo "::error::API call failed with status $http_code"[0m
+2025-12-23T13:52:49.3068899Z [36;1m  exit 1[0m
+2025-12-23T13:52:49.3069505Z [36;1mfi[0m
+2025-12-23T13:52:49.3642612Z shell: /usr/bin/bash -e {0}
+2025-12-23T13:52:49.3643807Z env:
+2025-12-23T13:52:49.3644597Z   VERCEL_APP_URL: ***
+2025-12-23T13:52:49.3645514Z   CRON_SECRET: ***
+2025-12-23T13:52:49.3646018Z ##[endgroup]
+2025-12-23T13:53:01.9096559Z HTTP Status: 500
+2025-12-23T13:53:01.9101677Z Response Body: {"error":"Internal server error","details":"\nInvalid `prisma.marketSnapshot.create()` invocation:\n\n{\n  data: {\n    simulationId: \"cmjiiskpx0001jv047of3wucv\",\n    symbol: \"NVDA\",\n    price: 183.69,\n    sentimentScore: 0.9,\n    sentimentReason: \"Sentiment is very positive. Nvidia's past returns are impressive, and it's a 'no-brainer' AI stock for long-term investment.\",\n    rsi: 53.05,\n    macd: -3.4469036575605116,\n    macdSignal: -4.446719078773079,\n    macdHistogram: 0.999815421212567,\n    redditHype: null,\n    stocktwitsBulls: 86,\n    stocktwitsBears: 14,\n    stocktwitsVolume: 30,\n    fearGreedIndex: 58,\n    fearGreedLabel: \"Greed\",\n    ema9: 179.08972124762184,\n    ema21: 181.36368679474654,\n    ema50: null,\n    emaTrend: \"BEARISH\",\n    bollingerUpper: 187.472636657284,\n    bollingerMiddle: 179.9205009460449,\n    bollingerLower: 172.36836523480582,\n    bollingerWidth: 0.08394969635510124,\n    atr: 6.175960506678442,\n    atrPercent: 3.3621647921380817,\n    newsHeadlines: [\n    ~~~~~~~~~~~~~\n      \"Markets mostly rise as rate cut hopes bring Christmas cheer\",\n      \"How A Potential 2026 Market Rotation Has Completely Reshaped My Portfolio\",\n      \"If You'd Invested $10,000 in Nvidia 10 Years Ago, Here's How Much You'd Have Today\",\n      \"Wall Street Breakfast Podcast: Wegovy Without The Needle Sparks Novo Surge\",\n      \"Nebius Group (NBIS) Launches AI Cloud 3.1\"\n    ],\n?   id?: String,\n?   timestamp?: DateTime,\n?   decisions?: BotDecisionUncheckedCreateNestedManyWithoutSnapshotInput\n  }\n}\n\nUnknown argument `newsHeadlines`. Available options are marked with ?."}
+2025-12-23T13:53:01.9134861Z ##[error]API call failed with status 500
+2025-12-23T13:53:01.9151533Z ##[error]Process completed with exit code 1.
+2025-12-23T13:53:01.9320308Z ##[group]Run echo "❌ Simulation tick failed - check logs"
+2025-12-23T13:53:01.9320782Z [36;1mecho "❌ Simulation tick failed - check logs"[0m
+2025-12-23T13:53:01.9353760Z shell: /usr/bin/bash -e {0}
+2025-12-23T13:53:01.9354045Z ##[endgroup]
+2025-12-23T13:53:01.9498935Z ❌ Simulation tick failed - check logs
+2025-12-23T13:53:01.9546719Z Cleaning up orphan processes

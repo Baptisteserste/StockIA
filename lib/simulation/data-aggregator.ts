@@ -346,13 +346,17 @@ export async function createMarketSnapshot(
     atrPercent: advancedIndicators?.atrPercent ?? null,
 
     // News headlines pour les agents LLM (5 derniers titres)
+    // Note: Ce champ n'est PAS stocké en base, juste passé aux agents
     newsHeadlines: finnhubData.news.slice(0, 5).map((n: any) => n.headline)
   };
 
-  // Insérer en base avec retry
+  // Extraire les données pour Prisma (sans newsHeadlines qui n'existe pas en base)
+  const { newsHeadlines, ...prismaData } = snapshotData;
+
+  // Insérer en base avec retry (sans newsHeadlines)
   await withRetry(() =>
     prisma.marketSnapshot.create({
-      data: snapshotData
+      data: prismaData
     })
   );
 
@@ -360,6 +364,7 @@ export async function createMarketSnapshot(
   console.log(`  - Stocktwits: ${stocktwitsData?.bullish ?? 'N/A'}% bulls`);
   console.log(`  - Fear & Greed: ${fearGreedData?.value ?? 'N/A'} (${fearGreedData?.label ?? 'N/A'})`);
   console.log(`  - EMA Trend: ${advancedIndicators?.emaTrend ?? 'N/A'}`);
+  console.log(`  - News Headlines: ${newsHeadlines?.length ?? 0} articles`);
 
   return snapshotData;
 }
