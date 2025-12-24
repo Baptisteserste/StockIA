@@ -62,6 +62,8 @@ interface SimulationData {
   currentDay: number;
   durationDays: number;
   status: string;
+  cheapModelId?: string;
+  premiumModelId?: string;
   portfolios: Portfolio[];
   roiHistory: RoiDataPoint[];
   recentDecisions: Decision[];
@@ -206,10 +208,21 @@ export default function SimulationPage() {
     }
   };
 
+  // Helper pour obtenir le modèle utilisé par chaque bot
+  const getModelForBot = (botType: string): Model | undefined => {
+    if (botType === 'CHEAP' && simulation?.cheapModelId) {
+      return models.find(m => m.id === simulation.cheapModelId);
+    }
+    if (botType === 'PREMIUM' && simulation?.premiumModelId) {
+      return models.find(m => m.id === simulation.premiumModelId);
+    }
+    return undefined; // ALGO n'utilise pas de modèle LLM
+  };
+
   const getLeader = () => {
     if (!simulation?.portfolios.length) return null;
     return simulation.portfolios.reduce((best, p) =>
-        p.roi > best.roi ? p : best
+      p.roi > best.roi ? p : best
     );
   };
 
@@ -292,17 +305,33 @@ export default function SimulationPage() {
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Agent Premium
-                      </label>
-                      <ModelCombobox
-                          models={models}
-                          value={premiumModelId}
-                          onValueChange={setPremiumModelId}
-                          disabled={loading}
-                          placeholder="Rechercher un modèle premium..."
-                      />
+            {/* Cartes Agents */}
+            <div className="grid grid-cols-3 gap-6">
+              {simulation.portfolios.map(portfolio => (
+                <Card key={portfolio.botType} className={`bg-slate-900 border-slate-800 ${leader?.botType === portfolio.botType ? 'ring-2 ring-yellow-500' : ''}`}>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <div className="flex items-center gap-2">
+                      {leader?.botType === portfolio.botType && (
+                        <Trophy className="h-5 w-5 text-yellow-500" />
+                      )}
+                      <h3 className="font-semibold text-white">{getBotName(portfolio.botType)}</h3>
+                      {/* Icône du modèle avec tooltip */}
+                      {getModelForBot(portfolio.botType)?.providerIcon && (
+                        <div
+                          className="relative group cursor-help"
+                          title={getModelForBot(portfolio.botType)?.name}
+                        >
+                          <img
+                            src={getModelForBot(portfolio.botType)?.providerIcon}
+                            alt="Model icon"
+                            className="h-5 w-5 rounded"
+                          />
+                          {/* Tooltip custom */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 border border-slate-700">
+                            {getModelForBot(portfolio.botType)?.name}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -340,99 +369,70 @@ export default function SimulationPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <Switch
-                        checked={useReddit}
-                        onCheckedChange={setUseReddit}
-                        disabled={loading}
-                    />
-                    <span className="text-sm text-slate-300">Activer analyse Reddit</span>
+            {/* Graphique Performance */}
+            <Card className="bg-slate-900 border-slate-800">
+              <CardHeader>
+                <h3 className="font-semibold text-white">Performance comparative</h3>
+              </CardHeader>
+              <CardContent>
+                {simulation.roiHistory && simulation.roiHistory.length > 1 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={simulation.roiHistory}>
+                      <XAxis dataKey="day" stroke="#64748b" />
+                      <YAxis stroke="#64748b" tickFormatter={(v) => `${v.toFixed(1)}%`} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }}
+                        labelStyle={{ color: '#fff' }}
+                        formatter={(value: number) => [`${value.toFixed(2)}%`, '']}
+                      />
+                      <Legend
+                        wrapperStyle={{ paddingTop: '10px' }}
+                      />
+                      <Line type="monotone" dataKey="CHEAP" stroke="#22c55e" name="Agent Cheap" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="PREMIUM" stroke="#3b82f6" name="Agent Premium" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="ALGO" stroke="#f59e0b" name="Algo Bot" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="BUYHOLD" stroke="#94a3b8" name="Buy & Hold" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-64 flex items-center justify-center text-slate-500">
+                    Graphique disponible après le premier tick
                   </div>
+                )}
+              </CardContent>
+            </Card>
 
-                  <Button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                  >
-                    {loading ? 'Démarrage...' : 'Démarrer la simulation'}
-                  </Button>
-                </form>
-            ) : (
-                <div className="space-y-6">
-                  {/* Header Dashboard */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-2xl font-bold text-white">
-                        Simulation {simulation.symbol}
-                      </h2>
-                      <p className="text-slate-400">Jour {simulation.currentDay} / {simulation.durationDays || 21}</p>
-                    </div>
-                    <Button
-                        onClick={handleStopSimulation}
-                        variant="destructive"
-                        className="bg-red-600 hover:bg-red-700"
-                    >
-                      Arrêter
-                    </Button>
-                  </div>
-
-                  {/* Cartes Agents */}
-                  <div className="grid grid-cols-3 gap-6">
-                    {simulation.portfolios.map(portfolio => (
-                        <Card key={portfolio.botType} className={`bg-slate-900 border-slate-800 ${leader?.botType === portfolio.botType ? 'ring-2 ring-yellow-500' : ''}`}>
-                          <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <div className="flex items-center gap-2">
-                              {leader?.botType === portfolio.botType && (
-                                  <Trophy className="h-5 w-5 text-yellow-500" />
-                              )}
-                              <h3 className="font-semibold text-white">{getBotName(portfolio.botType)}</h3>
-                            </div>
-                            {portfolio.botType === 'ALGO' && (
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                      <Settings className="h-4 w-4" />
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-80 bg-slate-800 border-slate-700">
-                                    <div className="space-y-4">
-                                      <h4 className="font-medium text-white">Configuration</h4>
-                                      <div className="space-y-2">
-                                        <label className="text-sm text-slate-300">
-                                          Balance Technique / Sentiment: {weightTechnical}% / {100 - weightTechnical}%
-                                        </label>
-                                        <Slider
-                                            value={[weightTechnical]}
-                                            onValueChange={(v) => setWeightTechnical(v[0])}
-                                            max={100}
-                                            step={10}
-                                        />
-                                      </div>
-                                    </div>
-                                  </PopoverContent>
-                                </Popover>
-                            )}
-                          </CardHeader>
-                          <CardContent>
-                            <div className={`text-3xl font-bold ${portfolio.roi >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                              {portfolio.roi >= 0 && '+'}{portfolio.roi.toFixed(2)}%
-                            </div>
-                            <div className="mt-4 space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span className="text-slate-400">Cash</span>
-                                <span className="text-white">
-                              {portfolio.cash.toLocaleString('fr-FR', { style: 'currency', currency: 'USD' })}
+            {/* Journal d'activité avec raisonnement */}
+            <Card className="bg-slate-900 border-slate-800">
+              <CardHeader>
+                <h3 className="font-semibold text-white">Journal d'activité</h3>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-96 bg-slate-950 border border-slate-800 rounded-xl p-4">
+                  <div className="space-y-4">
+                    {simulation.recentDecisions && simulation.recentDecisions.length > 0 ? (
+                      simulation.recentDecisions.map((d, i) => (
+                        <div key={i} className="border-b border-slate-800 pb-3 last:border-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className={`font-semibold ${d.botType === 'CHEAP' ? 'text-green-400' :
+                              d.botType === 'PREMIUM' ? 'text-blue-400' : 'text-amber-400'
+                              }`}>
+                              {getBotName(d.botType)}
                             </span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-slate-400">Actions</span>
-                                <span className="text-white">{portfolio.shares.toFixed(2)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-slate-400">Valeur totale</span>
-                                <span className="text-white">
-                              {portfolio.totalValue.toLocaleString('fr-FR', { style: 'currency', currency: 'USD' })}
+                            <span className={`text-xs px-2 py-0.5 rounded ${d.action === 'BUY' ? 'bg-green-900 text-green-300' :
+                              d.action === 'SELL' ? 'bg-red-900 text-red-300' : 'bg-slate-700 text-slate-300'
+                              }`}>
+                              {d.action} {d.quantity > 0 && `${d.quantity.toFixed(2)} @ $${d.price.toFixed(2)}`}
                             </span>
+                          </div>
+                          <p className="text-sm text-slate-400">{d.reason}</p>
+                          {d.confidence && (
+                            <div className="mt-1 flex items-center gap-2">
+                              <div className="h-1 flex-1 bg-slate-700 rounded">
+                                <div
+                                  className="h-1 bg-blue-500 rounded"
+                                  style={{ width: `${d.confidence * 100}%` }}
+                                />
                               </div>
                             </div>
                           </CardContent>
