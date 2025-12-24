@@ -92,7 +92,9 @@ export async function GET() {
           price: d.price,
           reason: d.reason,
           confidence: d.confidence,
-          timestamp: d.snapshot.timestamp
+          timestamp: d.snapshot.timestamp,
+          tokens: d.tokens,
+          cost: d.cost
         }))
       }
     });

@@ -156,6 +156,8 @@ export async function GET(req: NextRequest) {
             price: snapshot.price,
             reason: actualReason,
             confidence: decision.confidence,
+            tokens: (decision as any).tokens || 0,
+            cost: (decision as any).cost || 0,
             debugData: decision.debugData ? JSON.parse(JSON.stringify(decision.debugData)) : undefined
           }
         });

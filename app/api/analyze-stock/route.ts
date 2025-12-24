@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         // 2. GESTION UTILISATEUR & CRÉDITS
         let user = await prisma.user.findUnique({ where: { id: userId } });
 
-        // Si l'utilisateur n'existe pas encore en DB (première analyse directe), on le crée
+        // Si l'utilisateur n'existe pas encore
         if (!user) {
             const clerkUser = await currentUser();
             const email = clerkUser?.emailAddresses[0]?.emailAddress || "unknown@email.com";
@@ -32,12 +32,29 @@ export async function POST(request: NextRequest) {
                 data: {
                     id: userId,
                     email: email,
-                    credits: 10 // Bonus de bienvenue
+                    credits: 10,
+                    lastRefill: new Date()
                 }
             });
+        } else {
+            // LOGIQUE DE RECHARGE QUOTIDIENNE
+            const now = new Date();
+            const lastRefill = new Date(user.lastRefill);
+            
+            // Si la dernière recharge date d'un jour différent d'aujourd'hui
+            if (lastRefill.toDateString() !== now.toDateString()) {
+                user = await prisma.user.update({
+                    where: { id: userId },
+                    data: { 
+                        credits: 10, // Remise à 10 (ou += 10 selon votre choix)
+                        lastRefill: now 
+                    }
+                });
+                console.log(`[Système] Crédits rechargés pour l'utilisateur ${userId}`);
+            }
         }
 
-        // Vérification du solde
+        // Vérification du solde après recharge éventuelle
         if (user.credits <= 0) {
             return NextResponse.json({ error: 'Crédits insuffisants. Veuillez recharger votre compte.' }, { status: 403 });
         }

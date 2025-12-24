@@ -8,11 +8,13 @@ datasource db {
 }
 
 model User {
-  id        String        @id @unique
-  email     String
-  credits   Int           @default(10)
-  createdAt DateTime      @default(now())
-  analyses  AnalysisLog[]
+  id          String             @id @unique
+  email       String
+  credits     Int                @default(10)
+  lastRefill  DateTime           @default(now()) // Pour la recharge quotidienne
+  createdAt   DateTime           @default(now())
+  analyses    AnalysisLog[]
+  simulations SimulationConfig[] // AJOUT : Relation inverse vers SimulationConfig
 }
 
 model AnalysisLog {
@@ -33,59 +35,49 @@ model SimulationConfig {
   cheapModelId   String
   premiumModelId String
   useReddit      Boolean          @default(false)
-  durationDays   Int              @default(21)
   status         SimulationStatus @default(IDLE)
   currentDay     Int              @default(0)
+  durationDays   Int              @default(21)
   createdBy      String?
+  user           User?            @relation(fields: [createdBy], references: [id]) // Cette ligne causait l'erreur
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  snapshots      MarketSnapshot[]
   portfolios     Portfolio[]
+  snapshots      MarketSnapshot[]
 
   @@index([status])
 }
 
 model MarketSnapshot {
-  id              String           @id @default(cuid())
-  simulationId    String
-  timestamp       DateTime         @default(now())
-  symbol          String
-  price           Float
-  sentimentScore  Float
-  sentimentReason String
-  rsi             Float?
-  macd            Float?
-  macdSignal      Float?
-  macdHistogram   Float?
-  redditHype      Float?
-  
-  // Stocktwits sentiment
-  stocktwitsBulls   Int?           // % bullish (0-100)
-  stocktwitsBears   Int?           // % bearish (0-100)
-  stocktwitsVolume  Int?           // Nombre de messages
-  
-  // Fear & Greed Index
-  fearGreedIndex    Int?           // 0-100
-  fearGreedLabel    String?        // "Extreme Fear", "Fear", "Neutral", "Greed", "Extreme Greed"
-  
-  // EMA (Exponential Moving Average)
-  ema9              Float?
-  ema21             Float?
-  ema50             Float?
-  emaTrend          String?        // "BULLISH", "BEARISH", "NEUTRAL"
-  
-  // Bollinger Bands
-  bollingerUpper    Float?
-  bollingerMiddle   Float?
-  bollingerLower    Float?
-  bollingerWidth    Float?         // Mesure de volatilité
-  
-  // ATR (Average True Range)
-  atr               Float?
-  atrPercent        Float?         // ATR en % du prix
-  
-  decisions       BotDecision[]
-  simulation      SimulationConfig @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  id               String           @id @default(cuid())
+  simulationId     String
+  timestamp        DateTime         @default(now())
+  symbol           String
+  price            Float
+  sentimentScore   Float
+  sentimentReason  String
+  rsi              Float?
+  macd             Float?
+  redditHype       Float?
+  atr              Float?
+  atrPercent       Float?
+  bollingerLower   Float?
+  bollingerMiddle  Float?
+  bollingerUpper   Float?
+  bollingerWidth   Float?
+  ema21            Float?
+  ema50            Float?
+  ema9             Float?
+  emaTrend         String?
+  fearGreedIndex   Int?
+  fearGreedLabel   String?
+  macdHistogram    Float?
+  macdSignal       Float?
+  stocktwitsBears  Int?
+  stocktwitsBulls  Int?
+  stocktwitsVolume Int?
+  decisions        BotDecision[]
+  simulation       SimulationConfig @relation(fields: [simulationId], references: [id], onDelete: Cascade)
 
   @@index([simulationId, timestamp])
 }
@@ -93,16 +85,18 @@ model MarketSnapshot {
 model BotDecision {
   id         String         @id @default(cuid())
   snapshotId String
+  snapshot   MarketSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
   botType    BotType
   action     TradeAction
   quantity   Float
   price      Float
   reason     String
   confidence Float?
+  tokens     Int            @default(0)
+  cost       Float          @default(0)
+  debugData  Json?
   algoConfig Json?
-  debugData  Json?          // Raw debug data: tokens, finish_reason, raw response, errors
   createdAt  DateTime       @default(now())
-  snapshot   MarketSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
 
   @@index([botType, createdAt])
 }
