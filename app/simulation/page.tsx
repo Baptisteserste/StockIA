@@ -61,6 +61,8 @@ interface SimulationData {
   currentDay: number;
   durationDays: number;
   status: string;
+  cheapModelId?: string;
+  premiumModelId?: string;
   portfolios: Portfolio[];
   roiHistory: RoiDataPoint[];
   recentDecisions: Decision[];
@@ -193,9 +195,20 @@ export default function SimulationPage() {
     }
   };
 
+  // Helper pour obtenir le modèle utilisé par chaque bot
+  const getModelForBot = (botType: string): Model | undefined => {
+    if (botType === 'CHEAP' && simulation?.cheapModelId) {
+      return models.find(m => m.id === simulation.cheapModelId);
+    }
+    if (botType === 'PREMIUM' && simulation?.premiumModelId) {
+      return models.find(m => m.id === simulation.premiumModelId);
+    }
+    return undefined; // ALGO n'utilise pas de modèle LLM
+  };
+
   const getLeader = () => {
     if (!simulation?.portfolios.length) return null;
-    return simulation.portfolios.reduce((best, p) => 
+    return simulation.portfolios.reduce((best, p) =>
       p.roi > best.roi ? p : best
     );
   };
@@ -371,6 +384,23 @@ export default function SimulationPage() {
                         <Trophy className="h-5 w-5 text-yellow-500" />
                       )}
                       <h3 className="font-semibold text-white">{getBotName(portfolio.botType)}</h3>
+                      {/* Icône du modèle avec tooltip */}
+                      {getModelForBot(portfolio.botType)?.providerIcon && (
+                        <div
+                          className="relative group cursor-help"
+                          title={getModelForBot(portfolio.botType)?.name}
+                        >
+                          <img
+                            src={getModelForBot(portfolio.botType)?.providerIcon}
+                            alt="Model icon"
+                            className="h-5 w-5 rounded"
+                          />
+                          {/* Tooltip custom */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 border border-slate-700">
+                            {getModelForBot(portfolio.botType)?.name}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     {portfolio.botType === 'ALGO' && (
                       <Popover>
@@ -436,12 +466,12 @@ export default function SimulationPage() {
                     <LineChart data={simulation.roiHistory}>
                       <XAxis dataKey="day" stroke="#64748b" />
                       <YAxis stroke="#64748b" tickFormatter={(v) => `${v.toFixed(1)}%`} />
-                      <Tooltip 
+                      <Tooltip
                         contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }}
                         labelStyle={{ color: '#fff' }}
                         formatter={(value: number) => [`${value.toFixed(2)}%`, '']}
                       />
-                      <Legend 
+                      <Legend
                         wrapperStyle={{ paddingTop: '10px' }}
                       />
                       <Line type="monotone" dataKey="CHEAP" stroke="#22c55e" name="Agent Cheap" strokeWidth={2} dot={false} />
@@ -470,16 +500,14 @@ export default function SimulationPage() {
                       simulation.recentDecisions.map((d, i) => (
                         <div key={i} className="border-b border-slate-800 pb-3 last:border-0">
                           <div className="flex items-center justify-between mb-1">
-                            <span className={`font-semibold ${
-                              d.botType === 'CHEAP' ? 'text-green-400' : 
+                            <span className={`font-semibold ${d.botType === 'CHEAP' ? 'text-green-400' :
                               d.botType === 'PREMIUM' ? 'text-blue-400' : 'text-amber-400'
-                            }`}>
+                              }`}>
                               {getBotName(d.botType)}
                             </span>
-                            <span className={`text-xs px-2 py-0.5 rounded ${
-                              d.action === 'BUY' ? 'bg-green-900 text-green-300' :
+                            <span className={`text-xs px-2 py-0.5 rounded ${d.action === 'BUY' ? 'bg-green-900 text-green-300' :
                               d.action === 'SELL' ? 'bg-red-900 text-red-300' : 'bg-slate-700 text-slate-300'
-                            }`}>
+                              }`}>
                               {d.action} {d.quantity > 0 && `${d.quantity.toFixed(2)} @ $${d.price.toFixed(2)}`}
                             </span>
                           </div>
@@ -487,8 +515,8 @@ export default function SimulationPage() {
                           {d.confidence && (
                             <div className="mt-1 flex items-center gap-2">
                               <div className="h-1 flex-1 bg-slate-700 rounded">
-                                <div 
-                                  className="h-1 bg-blue-500 rounded" 
+                                <div
+                                  className="h-1 bg-blue-500 rounded"
                                   style={{ width: `${d.confidence * 100}%` }}
                                 />
                               </div>

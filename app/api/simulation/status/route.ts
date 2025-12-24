@@ -74,6 +74,8 @@ export async function GET() {
         durationDays: simulation.durationDays,
         status: simulation.status,
         useReddit: simulation.useReddit,
+        cheapModelId: simulation.cheapModelId,
+        premiumModelId: simulation.premiumModelId,
         portfolios: simulation.portfolios.map(p => ({
           botType: p.botType,
           cash: p.cash,
