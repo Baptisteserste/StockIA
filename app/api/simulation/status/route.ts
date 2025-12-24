@@ -32,7 +32,7 @@ export async function GET() {
         day: index + 1,
         price: snap.price
       };
-      
+
       simulation.portfolios.forEach(p => {
         const value = p.cash + p.shares * snap.price;
         dayData[p.botType] = ((value / simulation.startCapital) - 1) * 100;
@@ -40,7 +40,7 @@ export async function GET() {
 
       // Buy & Hold: si on avait tout investi au jour 1
       dayData.BUYHOLD = ((snap.price / initialPrice) - 1) * 100;
-      
+
       return dayData;
     });
 
@@ -58,13 +58,19 @@ export async function GET() {
       }
     });
 
+    // Calculer le jour actuel dynamiquement (différence entre maintenant et createdAt)
+    const createdAt = new Date(simulation.createdAt);
+    const now = new Date();
+    const diffTime = now.getTime() - createdAt.getTime();
+    const calculatedDay = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 car le premier jour = jour 1
+
     return NextResponse.json({
       active: true,
       simulation: {
         id: simulation.id,
         symbol: simulation.symbol,
         startCapital: simulation.startCapital,
-        currentDay: simulation.currentDay,
+        currentDay: calculatedDay,
         durationDays: simulation.durationDays,
         status: simulation.status,
         useReddit: simulation.useReddit,
