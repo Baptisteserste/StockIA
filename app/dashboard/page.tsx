@@ -2,6 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
+import DangerZone from "@/components/DangerZone"; // AJOUTER CET IMPORT
 import { ArrowLeft, ArrowRight, TrendingUp, Wallet, Activity, Cpu, CircleDollarSign, PlayCircle, BarChart3 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -163,66 +164,13 @@ export default async function DashboardPage() {
                         </Link>
                     </div>
                 </div>
+                    
+                    {/* SECTION 3 : Historique */}
+                    {/* ... votre tableau existant ... */}
 
-                {/* SECTION 3 : Historique */}
-                <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-                    <div className="p-6 border-b border-slate-800">
-                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-slate-400" />
-                            Historique des analyses
-                        </h2>
-                    </div>
+                    <DangerZone /> {/* UTILISER LE COMPOSANT ICI */}
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-slate-950 text-slate-400 uppercase font-medium">
-                            <tr>
-                                <th className="p-4">Date</th>
-                                <th className="p-4">Symbole</th>
-                                <th className="p-4">Résultat</th>
-                                <th className="p-4">Tokens / Coût</th>
-                            </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-800">
-                            {user.analyses.length === 0 ? (
-                                <tr>
-                                    <td colSpan={4} className="p-8 text-center text-slate-500">
-                                        Aucune analyse pour le moment.
-                                    </td>
-                                </tr>
-                            ) : (
-                                user.analyses.map((log) => (
-                                    <tr key={log.id} className="hover:bg-slate-800/50 transition-colors">
-                                        <td className="p-4 text-slate-300">
-                                            {new Date(log.createdAt).toLocaleDateString('fr-FR', {
-                                                day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
-                                            })}
-                                        </td>
-                                        <td className="p-4 font-bold text-white">{log.symbol}</td>
-                                        <td className="p-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            log.sentiment === 'positif' ? 'bg-green-500/20 text-green-400' :
-                                log.sentiment === 'négatif' ? 'bg-red-500/20 text-red-400' :
-                                    'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          {log.sentiment.toUpperCase()}
-                        </span>
-                                        </td>
-                                        <td className="p-4 text-slate-500">
-                                            <div className="flex flex-col">
-                                                <span>{log.tokens} tkns</span>
-                                                <span className="text-xs opacity-50">${log.cost.toFixed(5)}</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
-
             </div>
-        </div>
-    );
-}
+        );
+    }
