@@ -28,9 +28,10 @@ export async function GET() {
 
     // Construire l'historique de ROI pour le graphique
     const roiHistory = simulation.snapshots.map((snap, index) => {
-      const dayData: Record<string, number> = {
+      const dayData: Record<string, any> = {
         day: index + 1,
-        price: snap.price
+        price: snap.price,
+        timestamp: snap.timestamp.toISOString() // Add snapshot timestamp for chart X-axis
       };
 
       simulation.portfolios.forEach(p => {
@@ -44,13 +45,13 @@ export async function GET() {
       return dayData;
     });
 
-    // Récupérer les décisions récentes avec raisonnement
+    // Récupérer TOUTES les décisions avec raisonnement
     const recentDecisions = await prisma.botDecision.findMany({
       where: {
         snapshot: { simulationId: simulation.id }
       },
       orderBy: { createdAt: 'desc' },
-      take: 30,
+      take: 500, // Increased to show all decisions in scrollable log
       include: {
         snapshot: {
           select: { timestamp: true, price: true }
