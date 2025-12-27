@@ -79,29 +79,34 @@ interface TradeRecord {
 
 const CONFIG = {
   // Risk Management
-  STOP_LOSS_PERCENT: 0.05,        // -5% stop-loss
-  TRAILING_STOP_PERCENT: 0.03,    // -3% trailing stop
-  TAKE_PROFIT_1: 0.15,            // +15% → vend 50%
-  TAKE_PROFIT_2: 0.25,            // +25% → vend tout
+  STOP_LOSS_PERCENT: 0.04,        // -4% stop-loss (plus serré)
+  TRAILING_STOP_PERCENT: 0.025,   // -2.5% trailing stop
+  TAKE_PROFIT_1: 0.05,            // +5% → vend 25% (rapide profit)
+  TAKE_PROFIT_2: 0.10,            // +10% → vend 50%
+  TAKE_PROFIT_3: 0.20,            // +20% → vend tout
 
   // Position Sizing
-  MIN_POSITION_PERCENT: 0.05,     // Min 5% du capital
-  MAX_POSITION_PERCENT: 0.25,     // Max 25% du capital
-  DEFAULT_POSITION_PERCENT: 0.10, // Par défaut 10%
+  MIN_POSITION_PERCENT: 0.08,     // Min 8% du capital (plus agressif)
+  MAX_POSITION_PERCENT: 0.30,     // Max 30% du capital
+  DEFAULT_POSITION_PERCENT: 0.15, // Par défaut 15%
 
-  // Score Weights
-  WEIGHT_TECHNICAL: 0.40,         // 40% technique
-  WEIGHT_SENTIMENT: 0.40,         // 40% sentiment (Stocktwits + Gemini)
-  WEIGHT_FEAR_GREED: 0.20,        // 20% Fear & Greed
+  // Score Weights - Plus équilibré technique vs sentiment
+  WEIGHT_TECHNICAL: 0.50,         // 50% technique (augmenté)
+  WEIGHT_SENTIMENT: 0.35,         // 35% sentiment
+  WEIGHT_FEAR_GREED: 0.15,        // 15% Fear & Greed
 
-  // Thresholds
-  BUY_THRESHOLD: 0.15,            // Score > 0.15 pour acheter (était 0.35)
-  SELL_THRESHOLD: -0.15,          // Score < -0.15 pour vendre (était -0.35)
-  STRONG_BUY_THRESHOLD: 0.40,     // Score > 0.4 = position plus grosse (était 0.6)
+  // Thresholds - Plus réactifs
+  BUY_THRESHOLD: 0.10,            // Score > 0.10 pour acheter
+  SELL_THRESHOLD: -0.05,          // Score < -0.05 pour vendre (beaucoup plus sensible!)
+  STRONG_BUY_THRESHOLD: 0.30,     // Score > 0.3 = position plus grosse
 
   // Bollinger
   BOLLINGER_OVERSOLD: 0.2,        // Prix sous 20% de la bande
-  BOLLINGER_OVERBOUGHT: 0.8,      // Prix au-dessus 80% de la bande
+  BOLLINGER_OVERBOUGHT: 0.75,     // Prix au-dessus 75% de la bande (plus sensible)
+
+  // Nouveau: RSI-based profit taking
+  RSI_PROFIT_TAKE: 65,            // Si RSI > 65 et en profit → vend 30%
+  RSI_EXTREME_SELL: 75,           // Si RSI > 75 → vend 50% même sans signal
 } as const;
 
 // ============== STATE MANAGEMENT ==============
@@ -390,23 +395,36 @@ function checkRiskManagement(
     };
   }
 
-  // 3. TAKE-PROFIT niveau 2: +25% → vendre tout
-  if (pnlPercent >= CONFIG.TAKE_PROFIT_2) {
+  // 3. TAKE-PROFIT niveau 3: +20% → vendre tout
+  if (pnlPercent >= CONFIG.TAKE_PROFIT_3) {
     return {
       shouldSell: true,
-      reason: `🎯 TAKE-PROFIT 2: +${(pnlPercent * 100).toFixed(1)}% - Objectif atteint!`,
+      reason: `🚀 TAKE-PROFIT 3: +${(pnlPercent * 100).toFixed(1)}% - Jackpot! Vente totale`,
       sellQuantity: position.quantity,
       isStopLoss: false
     };
   }
 
-  // 4. TAKE-PROFIT niveau 1: +15% → vendre 50%
-  if (pnlPercent >= CONFIG.TAKE_PROFIT_1) {
+  // 4. TAKE-PROFIT niveau 2: +10% → vendre 50%
+  if (pnlPercent >= CONFIG.TAKE_PROFIT_2) {
     const sellQty = Math.floor(position.quantity / 2);
     if (sellQty > 0) {
       return {
         shouldSell: true,
-        reason: `💰 TAKE-PROFIT 1: +${(pnlPercent * 100).toFixed(1)}% - Sécuriser 50%`,
+        reason: `🎯 TAKE-PROFIT 2: +${(pnlPercent * 100).toFixed(1)}% - Sécuriser 50%`,
+        sellQuantity: sellQty,
+        isStopLoss: false
+      };
+    }
+  }
+
+  // 5. TAKE-PROFIT niveau 1: +5% → vendre 25%
+  if (pnlPercent >= CONFIG.TAKE_PROFIT_1) {
+    const sellQty = Math.floor(position.quantity / 4);
+    if (sellQty > 0) {
+      return {
+        shouldSell: true,
+        reason: `💰 TAKE-PROFIT 1: +${(pnlPercent * 100).toFixed(1)}% - Profit rapide 25%`,
         sellQuantity: sellQty,
         isStopLoss: false
       };
@@ -468,6 +486,54 @@ export function decide(
           tokens: 0,
           cost: 0
         };
+      }
+    }
+  }
+
+  // ========== RSI-BASED PROFIT TAKING ==========
+  if (shares > 0 && snapshot.rsi !== null) {
+    const rsi = snapshot.rsi;
+
+    // RSI extrême (>75) → Vendre 50% même sans signal négatif
+    if (rsi > CONFIG.RSI_EXTREME_SELL) {
+      const sellQty = Math.floor(shares / 2);
+      if (sellQty > 0) {
+        if (state.position) {
+          state.position.quantity -= sellQty;
+          if (state.position.quantity <= 0) state.position = null;
+        }
+        state.tradeHistory.push({ type: 'SELL', price, quantity: sellQty, timestamp: Date.now() });
+
+        return {
+          action: 'SELL',
+          quantity: sellQty,
+          reason: `⚠️ RSI EXTRÊME: ${rsi.toFixed(0)} - Suracheté! Vente 50%`,
+          confidence: 0.85,
+          tokens: 0,
+          cost: 0
+        };
+      }
+    }
+
+    // RSI élevé (>65) + en profit → Vendre 30%
+    if (rsi > CONFIG.RSI_PROFIT_TAKE && state.position) {
+      const pnl = (price - state.position.entryPrice) / state.position.entryPrice;
+      if (pnl > 0.02) { // Au moins +2% de profit
+        const sellQty = Math.floor(shares * 0.3);
+        if (sellQty > 0) {
+          state.position.quantity -= sellQty;
+          if (state.position.quantity <= 0) state.position = null;
+          state.tradeHistory.push({ type: 'SELL', price, quantity: sellQty, timestamp: Date.now() });
+
+          return {
+            action: 'SELL',
+            quantity: sellQty,
+            reason: `📊 RSI haut + profit: RSI=${rsi.toFixed(0)}, +${(pnl * 100).toFixed(1)}% - Sécuriser 30%`,
+            confidence: 0.75,
+            tokens: 0,
+            cost: 0
+          };
+        }
       }
     }
   }
