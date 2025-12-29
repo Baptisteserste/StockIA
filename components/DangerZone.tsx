@@ -1,35 +1,44 @@
 'use client';
 
-import { Trash2 } from "lucide-react";
+import { Trash2, ShieldAlert } from "lucide-react";
 
 export default function DangerZone() {
     const handleDelete = async () => {
-        if (confirm("Êtes-vous sûr de vouloir supprimer définitivement toutes vos données ? Cette action est irréversible.")) {
+        const check = confirm(
+            "🛑 ACTION IRRÉVERSIBLE\n\n" +
+            "Cela supprimera votre historique, vos simulations et vos crédits.\n" +
+            "Voulez-vous vraiment continuer ?"
+        );
+
+        if (check) {
             const res = await fetch('/api/user/delete-data', { method: 'DELETE' });
             if (res.ok) {
-                alert("Données supprimées. Vous allez être redirigé.");
+                alert("Données effacées. À bientôt !");
                 window.location.href = "/";
-            } else {
-                alert("Une erreur est survenue lors de la suppression.");
             }
         }
     };
 
     return (
-        <div className="mt-16 p-6 border border-red-900/30 bg-red-950/10 rounded-xl">
-            <div className="flex items-center gap-3 mb-4">
-                <Trash2 className="w-5 h-5 text-red-500" />
-                <h2 className="text-xl font-semibold text-white">Zone de Danger</h2>
+        <div className="mt-16 p-8 border border-red-900/20 bg-red-950/10 rounded-3xl">
+            <div className="flex items-center gap-3 mb-6">
+                <ShieldAlert className="w-6 h-6 text-red-500" />
+                <h2 className="text-xl font-bold text-white">Confidentialité & RGPD</h2>
             </div>
-            <p className="text-slate-400 text-sm mb-6">
-                Conformément au RGPD, vous pouvez supprimer définitivement toutes vos données collectées sur StockIA (historiques d'analyses, simulations et solde de crédits). Cette action est irréversible.
-            </p>
-            <button
-                onClick={handleDelete}
-                className="px-4 py-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-600/50 rounded-lg transition-all text-sm font-semibold cursor-pointer"
-            >
-                Supprimer mon compte et mes données
-            </button>
+
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                <div className="max-w-2xl text-slate-400 text-sm leading-relaxed">
+                    Vous disposez d'un droit d'accès et d'effacement de vos données personnelles.
+                    En cliquant sur le bouton, vous déclenchez la suppression immédiate de l'intégralité de votre profil
+                    et de vos activités stockées dans notre base de données.
+                </div>
+                <button
+                    onClick={handleDelete}
+                    className="px-6 py-3 bg-red-600/10 border border-red-600/30 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all text-sm font-bold cursor-pointer"
+                >
+                    Supprimer mon compte et mes données
+                </button>
+            </div>
         </div>
     );
 }
