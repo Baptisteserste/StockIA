@@ -161,14 +161,14 @@ export async function GET() {
 
     if (!modelsRes.ok) {
       console.warn('OpenRouter API failed, using fallback models');
-      return NextResponse.json(DEFAULT_MODELS);
+      return NextResponse.json({ models: DEFAULT_MODELS });
     }
 
     const data = await modelsRes.json();
-    
+
     if (!data.data || !Array.isArray(data.data)) {
       console.warn('Invalid OpenRouter response format, using fallback');
-      return NextResponse.json(DEFAULT_MODELS);
+      return NextResponse.json({ models: DEFAULT_MODELS });
     }
 
     // Filtrer et mapper les modèles
@@ -177,12 +177,12 @@ export async function GET() {
         // Exclure les modèles avec pricing invalide (négatif ou undefined)
         const promptPrice = parseFloat(m.pricing?.prompt);
         if (isNaN(promptPrice) || promptPrice < 0) return false;
-        
+
         return true;
       })
       .map((m: any) => {
         const provider = getProviderFromModelId(m.id, providers);
-        
+
         return {
           id: m.id,
           name: m.name,
@@ -197,10 +197,10 @@ export async function GET() {
       })
       .sort((a: Model, b: Model) => a.pricing.prompt - b.pricing.prompt);
 
-    return NextResponse.json(models.length > 0 ? models : DEFAULT_MODELS);
+    return NextResponse.json({ models: models.length > 0 ? models : DEFAULT_MODELS });
 
   } catch (error) {
     console.error('Error fetching OpenRouter models:', error);
-    return NextResponse.json(DEFAULT_MODELS);
+    return NextResponse.json({ models: DEFAULT_MODELS });
   }
 }
