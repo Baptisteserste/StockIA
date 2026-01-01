@@ -80,38 +80,38 @@ interface TradeRecord {
 const CONFIG = {
   // Risk Management
   STOP_LOSS_PERCENT: 0.04,        // -4% stop-loss
-  TRAILING_STOP_PERCENT: 0.015,   // -1.5% trailing stop (plus serré pour prendre les profits)
-  TAKE_PROFIT_1: 0.02,            // +2% → vend 25% (profit rapide)
-  TAKE_PROFIT_2: 0.05,            // +5% → vend 50%
-  TAKE_PROFIT_3: 0.10,            // +10% → vend tout
+  TRAILING_STOP_PERCENT: 0.015,   // -1.5% trailing stop
+  TAKE_PROFIT_1: 0.03,            // +3% → vend 25%
+  TAKE_PROFIT_2: 0.06,            // +6% → vend 50%
+  TAKE_PROFIT_3: 0.12,            // +12% → vend tout
 
-  // Position Sizing - Plus agressif
-  MIN_POSITION_PERCENT: 0.15,     // Min 15% du capital
-  MAX_POSITION_PERCENT: 0.50,     // Max 50% du capital (augmenté)
-  DEFAULT_POSITION_PERCENT: 0.25, // Par défaut 25%
+  // Position Sizing - Moins de trades, positions plus grosses
+  MIN_POSITION_PERCENT: 0.20,     // Min 20% du capital
+  MAX_POSITION_PERCENT: 0.60,     // Max 60% du capital
+  DEFAULT_POSITION_PERCENT: 0.40, // Par défaut 40% (augmenté)
 
-  // Score Weights
-  WEIGHT_TECHNICAL: 0.50,
-  WEIGHT_SENTIMENT: 0.35,
-  WEIGHT_FEAR_GREED: 0.15,
+  // Score Weights - 60% technique optimal selon backtest
+  WEIGHT_TECHNICAL: 0.60,         // 60% technique (optimisé via backtest)
+  WEIGHT_SENTIMENT: 0.28,         // 28% sentiment
+  WEIGHT_FEAR_GREED: 0.12,        // 12% Fear & Greed
 
-  // Thresholds - Zone neutre réduite
-  BUY_THRESHOLD: 0.05,            // Score > 0.05 pour acheter (réduit de 0.10)
-  SELL_THRESHOLD: 0.00,           // Score < 0 pour vendre (réduit de -0.05)
-  STRONG_BUY_THRESHOLD: 0.20,     // Score > 0.2 = position plus grosse
+  // Thresholds - Zone neutre ÉLARGIE pour moins de trades
+  BUY_THRESHOLD: 0.15,            // Score > 0.15 pour acheter (était 0.05)
+  SELL_THRESHOLD: -0.10,          // Score < -0.10 pour vendre (était 0.00)
+  STRONG_BUY_THRESHOLD: 0.30,     // Score > 0.3 = position encore plus grosse
 
   // Bollinger
-  BOLLINGER_OVERSOLD: 0.2,
-  BOLLINGER_OVERBOUGHT: 0.75,
+  BOLLINGER_OVERSOLD: 0.15,       // Prix sous 15% de la bande (plus strict)
+  BOLLINGER_OVERBOUGHT: 0.80,     // Prix au-dessus 80% (plus strict)
 
   // RSI-based profit taking
-  RSI_PROFIT_TAKE: 60,            // Si RSI > 60 et en profit → vend 30%
-  RSI_EXTREME_SELL: 70,           // Si RSI > 70 → vend 50%
+  RSI_PROFIT_TAKE: 65,            // Si RSI > 65 et en profit → vend 30%
+  RSI_EXTREME_SELL: 75,           // Si RSI > 75 → vend 50%
 
-  // TIME-AWARE TRADING (nouveau)
-  TIME_FORCE_BUY_THRESHOLD: 0.70, // Si >70% de la durée écoulée
-  TIME_FORCE_BUY_CASH_MIN: 0.40,  // ET cash > 40% → force un achat
-  TIME_LIQUIDATE_THRESHOLD: 0.95, // Si >95% de la durée → liquide tout
+  // TIME-AWARE TRADING
+  TIME_FORCE_BUY_THRESHOLD: 0.70,
+  TIME_FORCE_BUY_CASH_MIN: 0.40,
+  TIME_LIQUIDATE_THRESHOLD: 0.95,
 } as const;
 
 // ============== STATE MANAGEMENT ==============
