@@ -652,7 +652,7 @@ export default function SimulationV2Page() {
                         <div>
                             <h3 className="font-bold text-white text-xl">Performance Comparative</h3>
                             <p className="text-slate-400 text-sm mt-1">
-                                Prix actuel: <span className="text-white font-mono">${simulation.roiHistory[simulation.roiHistory.length - 1]?.price.toFixed(2)}</span>
+                                Prix actuel: <span className="text-white font-mono">${simulation.roiHistory?.length > 0 ? simulation.roiHistory[simulation.roiHistory.length - 1]?.price?.toFixed(2) : 'N/A'}</span>
                             </p>
                         </div>
                         <div className="flex gap-2">

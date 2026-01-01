@@ -101,14 +101,15 @@ export default function SimulationPage() {
 
     fetch('/api/openrouter/models')
       .then(r => r.json())
-      .then(data => {
-        setModels(data);
-        if (data.length > 0) {
-          setCheapModelId(data[0].id);
-          setPremiumModelId(data[Math.min(1, data.length - 1)].id);
+      .then(response => {
+        const models = response.models || response; // Support both formats
+        setModels(models);
+        if (models.length > 0) {
+          setCheapModelId(models[0].id);
+          setPremiumModelId(models[Math.min(1, models.length - 1)].id);
         }
         localStorage.setItem('openrouter_models_v2', JSON.stringify({
-          data,
+          data: models,
           timestamp: Date.now()
         }));
       })
