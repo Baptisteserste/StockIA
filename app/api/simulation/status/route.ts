@@ -26,17 +26,44 @@ export async function GET() {
     // Prix initial pour calculer Buy & Hold
     const initialPrice = simulation.snapshots[0]?.price || 1;
 
+    // Reconstruire l'historique des portfolios à chaque snapshot
+    // On simule l'évolution des portfolios en suivant les décisions
+    const portfolioStates: Record<string, { cash: number; shares: number }> = {};
+    simulation.portfolios.forEach(p => {
+      portfolioStates[p.botType] = { cash: simulation.startCapital, shares: 0 };
+    });
+
     // Construire l'historique de ROI pour le graphique
     const roiHistory = simulation.snapshots.map((snap, index) => {
       const dayData: Record<string, any> = {
         day: index + 1,
         price: snap.price,
-        timestamp: snap.timestamp.toISOString() // Add snapshot timestamp for chart X-axis
+        timestamp: snap.timestamp.toISOString()
       };
 
-      simulation.portfolios.forEach(p => {
-        const value = p.cash + p.shares * snap.price;
-        dayData[p.botType] = ((value / simulation.startCapital) - 1) * 100;
+      // Appliquer les décisions de ce snapshot aux portfolios
+      snap.decisions.forEach(decision => {
+        const state = portfolioStates[decision.botType];
+        if (!state) return;
+
+        if (decision.action === 'BUY' && decision.quantity > 0) {
+          const cost = decision.quantity * decision.price;
+          if (state.cash >= cost) {
+            state.cash -= cost;
+            state.shares += decision.quantity;
+          }
+        } else if (decision.action === 'SELL' && decision.quantity > 0) {
+          const qty = Math.min(decision.quantity, state.shares);
+          state.cash += qty * decision.price;
+          state.shares -= qty;
+        }
+      });
+
+      // Calculer le ROI pour chaque bot à ce point dans le temps
+      Object.keys(portfolioStates).forEach(botType => {
+        const state = portfolioStates[botType];
+        const value = state.cash + state.shares * snap.price;
+        dayData[botType] = ((value / simulation.startCapital) - 1) * 100;
       });
 
       // Buy & Hold: si on avait tout investi au jour 1

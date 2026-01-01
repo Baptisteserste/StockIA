@@ -564,7 +564,15 @@ export default function SimulationV2Page() {
                 <div className="grid grid-cols-3 gap-5 mb-6">
                     {simulation.portfolios.map((portfolio) => {
                         const icon = getModelIcon(portfolio.botType);
-                        const isPositive = portfolio.roi >= 0;
+                        // Calculer le ROI dynamiquement avec le prix actuel
+                        const currentPrice = simulation.roiHistory?.length > 0
+                            ? simulation.roiHistory[simulation.roiHistory.length - 1]?.price
+                            : 0;
+                        const currentValue = portfolio.cash + portfolio.shares * currentPrice;
+                        const dynamicRoi = simulation.startCapital > 0
+                            ? ((currentValue / simulation.startCapital) - 1) * 100
+                            : 0;
+                        const isPositive = dynamicRoi >= 0;
 
                         return (
                             <Card
@@ -630,7 +638,7 @@ export default function SimulationV2Page() {
                                     {/* ROI - BIG */}
                                     <div className="mb-4">
                                         <div className={`text-4xl font-bold flex items-center gap-2 ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                                            {isPositive ? '+' : ''}{portfolio.roi.toFixed(2)}%
+                                            {isPositive ? '+' : ''}{dynamicRoi.toFixed(2)}%
                                             {isPositive ?
                                                 <TrendingUp className="h-6 w-6" /> :
                                                 <TrendingDown className="h-6 w-6" />
@@ -658,7 +666,7 @@ export default function SimulationV2Page() {
                                         </div>
                                         <div className="bg-slate-800/30 rounded-lg p-3">
                                             <p className="text-slate-500 text-xs mb-1">Valeur totale</p>
-                                            <p className="text-white font-mono font-semibold">${portfolio.totalValue.toLocaleString()}</p>
+                                            <p className="text-white font-mono font-semibold">${currentValue.toLocaleString()}</p>
                                         </div>
                                     </div>
                                 </CardContent>
