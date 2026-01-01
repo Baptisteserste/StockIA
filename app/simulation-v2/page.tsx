@@ -248,13 +248,20 @@ export default function SimulationV2Page() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [statusRes, decisionsRes] = await Promise.all([
+                const [statusRes, decisionsRes, algoConfigRes] = await Promise.all([
                     fetch('/api/simulation/status'),
-                    fetch('/api/debug/decisions')
+                    fetch('/api/debug/decisions'),
+                    fetch('/api/simulation/algo-config')
                 ]);
 
                 const statusData = await statusRes.json();
                 const decisionsData = await decisionsRes.json();
+                const algoConfigData = await algoConfigRes.json();
+
+                // Load saved algo weight
+                if (algoConfigData.algoWeightTechnical !== undefined) {
+                    setWeightTechnical(algoConfigData.algoWeightTechnical);
+                }
 
                 if (statusData.active && statusData.simulation) {
                     // Filter decisions for current simulation only
@@ -603,6 +610,13 @@ export default function SimulationV2Page() {
                                                             <Slider
                                                                 value={[weightTechnical]}
                                                                 onValueChange={(v) => setWeightTechnical(v[0])}
+                                                                onValueCommit={(v) => {
+                                                                    fetch('/api/simulation/algo-config', {
+                                                                        method: 'PATCH',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ weightTechnical: v[0] })
+                                                                    });
+                                                                }}
                                                                 max={100}
                                                                 step={10}
                                                             />

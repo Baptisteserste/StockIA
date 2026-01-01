@@ -444,7 +444,8 @@ function checkRiskManagement(
 export function decide(
   snapshot: MarketSnapshot,
   portfolio: Portfolio,
-  agentId: string = 'algo-default'
+  agentId: string = 'algo-default',
+  weightTechnical?: number // 0-100, override CONFIG if provided
 ): DecisionResult {
   const state = getOrCreateState(agentId);
   const { price } = snapshot;
@@ -543,10 +544,21 @@ export function decide(
   const sentiment = calculateSentimentScore(snapshot);
   const fearGreed = calculateFearGreedScore(snapshot);
 
+  // Use dynamic weights if provided (0-100 scale), else use CONFIG
+  const techWeight = weightTechnical !== undefined
+    ? weightTechnical / 100
+    : CONFIG.WEIGHT_TECHNICAL;
+  const sentWeight = weightTechnical !== undefined
+    ? (100 - weightTechnical) / 100 * 0.85  // 85% of remaining goes to sentiment
+    : CONFIG.WEIGHT_SENTIMENT;
+  const fgWeight = weightTechnical !== undefined
+    ? (100 - weightTechnical) / 100 * 0.15  // 15% of remaining goes to fear/greed
+    : CONFIG.WEIGHT_FEAR_GREED;
+
   const compositeScore =
-    technical.score * CONFIG.WEIGHT_TECHNICAL +
-    sentiment.score * CONFIG.WEIGHT_SENTIMENT +
-    fearGreed.score * CONFIG.WEIGHT_FEAR_GREED;
+    technical.score * techWeight +
+    sentiment.score * sentWeight +
+    fearGreed.score * fgWeight;
 
   const allSignals = [...technical.signals, ...sentiment.signals, ...fearGreed.signals];
   const signalSummary = allSignals.slice(0, 4).join(' | '); // Max 4 signaux
