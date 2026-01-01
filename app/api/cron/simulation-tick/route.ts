@@ -28,6 +28,37 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ skipped: true, reason: 'weekend' });
   }
 
+  // Guard US market holidays (NYSE/NASDAQ)
+  const usHolidays2025_2026 = [
+    // 2025
+    '2025-01-01', // New Year's Day
+    '2025-01-20', // MLK Day
+    '2025-02-17', // Presidents' Day
+    '2025-04-18', // Good Friday
+    '2025-05-26', // Memorial Day
+    '2025-06-19', // Juneteenth
+    '2025-07-04', // Independence Day
+    '2025-09-01', // Labor Day
+    '2025-11-27', // Thanksgiving
+    '2025-12-25', // Christmas
+    // 2026
+    '2026-01-01', // New Year's Day
+    '2026-01-19', // MLK Day
+    '2026-02-16', // Presidents' Day
+    '2026-04-03', // Good Friday
+    '2026-05-25', // Memorial Day
+    '2026-06-19', // Juneteenth
+    '2026-07-03', // Independence Day (observed)
+    '2026-09-07', // Labor Day
+    '2026-11-26', // Thanksgiving
+    '2026-12-25', // Christmas
+  ];
+
+  const todayStr = now.toISOString().split('T')[0];
+  if (!force && usHolidays2025_2026.includes(todayStr)) {
+    return NextResponse.json({ skipped: true, reason: `holiday: ${todayStr}` });
+  }
+
   // Idempotence check
   const rounded = new Date(now);
   rounded.setMinutes(0, 0, 0);
