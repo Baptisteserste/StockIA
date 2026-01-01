@@ -29,21 +29,22 @@ model AnalysisLog {
 }
 
 model SimulationConfig {
-  id             String           @id @default(cuid())
-  symbol         String
-  startCapital   Float
-  cheapModelId   String
-  premiumModelId String
-  useReddit      Boolean          @default(false)
-  status         SimulationStatus @default(IDLE)
-  currentDay     Int              @default(0)
-  durationDays   Int              @default(21)
-  createdBy      String?
-  user           User?            @relation(fields: [createdBy], references: [id]) // Cette ligne causait l'erreur
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  portfolios     Portfolio[]
-  snapshots      MarketSnapshot[]
+  id                   String           @id @default(cuid())
+  symbol               String
+  startCapital         Float
+  cheapModelId         String
+  premiumModelId       String
+  useReddit            Boolean          @default(false)
+  status               SimulationStatus @default(IDLE)
+  currentDay           Int              @default(0)
+  durationDays         Int              @default(21)
+  algoWeightTechnical  Int              @default(60)  // 0-100: % poids technique vs sentiment
+  createdBy            String?
+  user                 User?            @relation(fields: [createdBy], references: [id]) // Cette ligne causait l'erreur
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  portfolios           Portfolio[]
+  snapshots            MarketSnapshot[]
 
   @@index([status])
 }

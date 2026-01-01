@@ -3,23 +3,9 @@ import prisma from '@/lib/prisma';
 
 export async function GET() {
     try {
-        // Get active simulation first
-        const activeSimulation = await prisma.simulationConfig.findFirst({
-            where: { status: 'RUNNING' }
-        });
-
-        if (!activeSimulation) {
-            return NextResponse.json({ decisions: [] });
-        }
-
-        // Récupérer les décisions de la simulation ACTIVE uniquement
+        // Récupérer les 100 dernières décisions avec leur snapshot (DEBUG - toutes simulations)
         const decisions = await prisma.botDecision.findMany({
-            where: {
-                snapshot: {
-                    simulationId: activeSimulation.id
-                }
-            },
-            take: 500,
+            take: 100,
             orderBy: { createdAt: 'desc' },
             include: {
                 snapshot: {
@@ -29,7 +15,8 @@ export async function GET() {
                         rsi: true,
                         macd: true,
                         sentimentScore: true,
-                        sentimentReason: true
+                        sentimentReason: true,
+                        simulationId: true
                     }
                 }
             }
