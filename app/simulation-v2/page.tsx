@@ -257,7 +257,14 @@ export default function SimulationV2Page() {
                 const decisionsData = await decisionsRes.json();
 
                 if (statusData.active && statusData.simulation) {
-                    const allDecisions = (decisionsData.decisions || []).sort(
+                    // Filter decisions for current simulation only
+                    const currentSimulationId = statusData.simulation.id;
+                    const filteredDecisions = (decisionsData.decisions || [])
+                        .filter((d: Decision & { snapshot?: { simulationId?: string } }) =>
+                            d.snapshot?.simulationId === currentSimulationId
+                        );
+
+                    const allDecisions = filteredDecisions.sort(
                         (a: Decision, b: Decision) => new Date(a.snapshot?.timestamp || a.createdAt).getTime() - new Date(b.snapshot?.timestamp || b.createdAt).getTime()
                     );
 
