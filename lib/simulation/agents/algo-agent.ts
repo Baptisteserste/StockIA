@@ -79,34 +79,39 @@ interface TradeRecord {
 
 const CONFIG = {
   // Risk Management
-  STOP_LOSS_PERCENT: 0.04,        // -4% stop-loss (plus serré)
-  TRAILING_STOP_PERCENT: 0.025,   // -2.5% trailing stop
-  TAKE_PROFIT_1: 0.05,            // +5% → vend 25% (rapide profit)
-  TAKE_PROFIT_2: 0.10,            // +10% → vend 50%
-  TAKE_PROFIT_3: 0.20,            // +20% → vend tout
+  STOP_LOSS_PERCENT: 0.04,        // -4% stop-loss
+  TRAILING_STOP_PERCENT: 0.015,   // -1.5% trailing stop (plus serré pour prendre les profits)
+  TAKE_PROFIT_1: 0.02,            // +2% → vend 25% (profit rapide)
+  TAKE_PROFIT_2: 0.05,            // +5% → vend 50%
+  TAKE_PROFIT_3: 0.10,            // +10% → vend tout
 
-  // Position Sizing
-  MIN_POSITION_PERCENT: 0.08,     // Min 8% du capital (plus agressif)
-  MAX_POSITION_PERCENT: 0.30,     // Max 30% du capital
-  DEFAULT_POSITION_PERCENT: 0.15, // Par défaut 15%
+  // Position Sizing - Plus agressif
+  MIN_POSITION_PERCENT: 0.15,     // Min 15% du capital
+  MAX_POSITION_PERCENT: 0.50,     // Max 50% du capital (augmenté)
+  DEFAULT_POSITION_PERCENT: 0.25, // Par défaut 25%
 
-  // Score Weights - Plus équilibré technique vs sentiment
-  WEIGHT_TECHNICAL: 0.50,         // 50% technique (augmenté)
-  WEIGHT_SENTIMENT: 0.35,         // 35% sentiment
-  WEIGHT_FEAR_GREED: 0.15,        // 15% Fear & Greed
+  // Score Weights
+  WEIGHT_TECHNICAL: 0.50,
+  WEIGHT_SENTIMENT: 0.35,
+  WEIGHT_FEAR_GREED: 0.15,
 
-  // Thresholds - Plus réactifs
-  BUY_THRESHOLD: 0.10,            // Score > 0.10 pour acheter
-  SELL_THRESHOLD: -0.05,          // Score < -0.05 pour vendre (beaucoup plus sensible!)
-  STRONG_BUY_THRESHOLD: 0.30,     // Score > 0.3 = position plus grosse
+  // Thresholds - Zone neutre réduite
+  BUY_THRESHOLD: 0.05,            // Score > 0.05 pour acheter (réduit de 0.10)
+  SELL_THRESHOLD: 0.00,           // Score < 0 pour vendre (réduit de -0.05)
+  STRONG_BUY_THRESHOLD: 0.20,     // Score > 0.2 = position plus grosse
 
   // Bollinger
-  BOLLINGER_OVERSOLD: 0.2,        // Prix sous 20% de la bande
-  BOLLINGER_OVERBOUGHT: 0.75,     // Prix au-dessus 75% de la bande (plus sensible)
+  BOLLINGER_OVERSOLD: 0.2,
+  BOLLINGER_OVERBOUGHT: 0.75,
 
-  // Nouveau: RSI-based profit taking
-  RSI_PROFIT_TAKE: 65,            // Si RSI > 65 et en profit → vend 30%
-  RSI_EXTREME_SELL: 75,           // Si RSI > 75 → vend 50% même sans signal
+  // RSI-based profit taking
+  RSI_PROFIT_TAKE: 60,            // Si RSI > 60 et en profit → vend 30%
+  RSI_EXTREME_SELL: 70,           // Si RSI > 70 → vend 50%
+
+  // TIME-AWARE TRADING (nouveau)
+  TIME_FORCE_BUY_THRESHOLD: 0.70, // Si >70% de la durée écoulée
+  TIME_FORCE_BUY_CASH_MIN: 0.40,  // ET cash > 40% → force un achat
+  TIME_LIQUIDATE_THRESHOLD: 0.95, // Si >95% de la durée → liquide tout
 } as const;
 
 // ============== STATE MANAGEMENT ==============
@@ -445,7 +450,9 @@ export function decide(
   snapshot: MarketSnapshot,
   portfolio: Portfolio,
   agentId: string = 'algo-default',
-  weightTechnical?: number // 0-100, override CONFIG if provided
+  weightTechnical?: number, // 0-100, override CONFIG if provided
+  currentDay?: number,      // Jour actuel de la simulation
+  durationDays?: number     // Durée totale de la simulation
 ): DecisionResult {
   const state = getOrCreateState(agentId);
   const { price } = snapshot;
@@ -454,6 +461,56 @@ export function decide(
   // Mettre à jour le plus haut prix si en position
   if (state.position && price > state.position.highestPrice) {
     state.position.highestPrice = price;
+  }
+
+  // ========== TIME-AWARE TRADING ==========
+  const timeProgress = (currentDay && durationDays) ? currentDay / durationDays : 0;
+  const totalValue = cash + shares * price;
+  const cashPercent = cash / totalValue;
+
+  // LIQUIDATION: Si >95% de la durée écoulée et on a des positions → tout vendre
+  if (timeProgress >= CONFIG.TIME_LIQUIDATE_THRESHOLD && shares > 0) {
+    if (state.position) {
+      state.position.quantity = 0;
+      state.position = null;
+    }
+    state.tradeHistory.push({ type: 'SELL', price, quantity: shares, timestamp: Date.now() });
+
+    return {
+      action: 'SELL',
+      quantity: shares,
+      reason: `⏰ LIQUIDATION FIN DE SIMULATION: Jour ${currentDay}/${durationDays} (${(timeProgress * 100).toFixed(0)}%)`,
+      confidence: 0.99,
+      tokens: 0,
+      cost: 0
+    };
+  }
+
+  // FORCE BUY: Si >70% de la durée et encore beaucoup de cash → forcer un achat
+  if (timeProgress >= CONFIG.TIME_FORCE_BUY_THRESHOLD &&
+    cashPercent > CONFIG.TIME_FORCE_BUY_CASH_MIN &&
+    cash >= price) {
+    const forceQuantity = Math.floor((cash * 0.5) / price); // Déployer 50% du cash restant
+
+    if (forceQuantity > 0) {
+      if (!state.position) {
+        state.position = { entryPrice: price, quantity: forceQuantity, highestPrice: price, entryTime: Date.now() };
+      } else {
+        const totalQty = state.position.quantity + forceQuantity;
+        state.position.entryPrice = (state.position.entryPrice * state.position.quantity + price * forceQuantity) / totalQty;
+        state.position.quantity = totalQty;
+      }
+      state.tradeHistory.push({ type: 'BUY', price, quantity: forceQuantity, timestamp: Date.now() });
+
+      return {
+        action: 'BUY',
+        quantity: forceQuantity,
+        reason: `⏰ FORCE BUY: ${(cashPercent * 100).toFixed(0)}% cash inutilisé au jour ${currentDay}/${durationDays}`,
+        confidence: 0.80,
+        tokens: 0,
+        cost: 0
+      };
+    }
   }
 
   // ========== RISK MANAGEMENT CHECK ==========

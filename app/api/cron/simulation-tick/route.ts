@@ -97,7 +97,9 @@ export async function GET(req: NextRequest) {
         snapshot,
         algoPortfolio,
         `algo-${config.id}`, // Agent ID unique par simulation pour le state
-        config.algoWeightTechnical // Poids technique depuis DB (0-100)
+        config.algoWeightTechnical, // Poids technique depuis DB (0-100)
+        config.currentDay,   // Jour actuel de la simulation
+        config.durationDays  // Durée totale de la simulation
       ))
     ]);
 
