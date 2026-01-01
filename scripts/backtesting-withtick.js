@@ -160,6 +160,9 @@ async function fetchHourlyData(symbol, days) {
     const closes = result.indicators.quote[0].close || [];
 
     // Filter market hours only (14:30-21:00 UTC for US market)
+    // Decision thresholds - OPTIMIZED based on backtest
+    const BUY_THRESHOLD = 0.15;
+    const SELL_THRESHOLD = -0.10;
     const data = [];
     for (let i = 0; i < closes.length; i++) {
         if (closes[i] !== null) {
