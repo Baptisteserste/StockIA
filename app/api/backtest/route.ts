@@ -124,7 +124,9 @@ function simulateAlgo(prices: number[], dates: string[], weightTechnical: number
     const bhShares = Math.floor(initialCapital / prices[0]);
     const bhCash = initialCapital - bhShares * prices[0];
 
-    for (let i = 30; i < prices.length; i++) {
+    // Start after minimum data for indicators (15 days for short backtests)
+    const startDay = Math.min(15, Math.floor(prices.length * 0.3));
+    for (let i = startDay; i < prices.length; i++) {
         const priceHistory = prices.slice(0, i + 1);
         const currentPrice = prices[i];
 
@@ -273,9 +275,9 @@ export async function POST(req: NextRequest) {
         // Fetch historical data
         const data = await fetchHistoricalData(symbol, days);
 
-        if (data.length < 50) {
+        if (data.length < 15) {
             return NextResponse.json(
-                { error: `Not enough data points (got ${data.length}, need 50+)` },
+                { error: `Not enough data points (got ${data.length}, need 15+)` },
                 { status: 400 }
             );
         }
