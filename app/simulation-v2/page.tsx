@@ -576,6 +576,9 @@ export default function SimulationV2Page() {
                         >
                             Arrêter
                         </Button>
+                        <Link href="/simulation-v2/history" className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm text-white transition-colors">
+                            Historique
+                        </Link>
                         <Link href="/simulation" className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm text-white transition-colors">
                             Version actuelle
                         </Link>
