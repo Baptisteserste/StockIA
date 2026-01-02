@@ -199,9 +199,9 @@ export default function HistoryV2Page() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+        <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
             {/* Header - EXACT simulation-v2 style */}
-            <header className="border-b border-slate-800/50 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+            <header className="border-b border-slate-700/50 sticky top-0 bg-slate-900/80 backdrop-blur-sm z-50">
                 <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link href="/" className="text-xl font-bold text-white">
@@ -287,7 +287,7 @@ export default function HistoryV2Page() {
 
                                 {/* Expanded content - EXACT simulation-v2 components */}
                                 {expandedId === sim.id && (
-                                    <CardContent className="border-t border-slate-800 pt-6 space-y-6 bg-slate-950/50">
+                                    <CardContent className="border-t border-slate-800 pt-6 space-y-6 bg-slate-900/30">
                                         {/* Agent Cards - EXACT simulation-v2 */}
                                         <div className="grid grid-cols-3 gap-5">
                                             {sim.portfolios.map(portfolio => {
@@ -462,8 +462,8 @@ export default function HistoryV2Page() {
                                                                                     <p className="text-white font-bold text-lg">{getBotName(decision.botType)}</p>
                                                                                     <div className="mt-1">
                                                                                         <span className={`px-3 py-1.5 rounded-lg text-base font-bold inline-block ${isBuy ? 'bg-green-500 text-white' :
-                                                                                                isSell ? 'bg-red-500 text-white' :
-                                                                                                    'bg-slate-600 text-slate-200'
+                                                                                            isSell ? 'bg-red-500 text-white' :
+                                                                                                'bg-slate-600 text-slate-200'
                                                                                             }`}>
                                                                                             {decision.action} {decision.quantity.toFixed(2)} @ ${decision.price.toFixed(2)}
                                                                                         </span>
