@@ -63,11 +63,12 @@ function algoDecide(prices, currentPrice, weightTechnical, portfolio) {
 
     const score = techScore * (weightTechnical / 100) + sentScore * (1 - weightTechnical / 100);
 
-    if (score > 0.05 && portfolio.cash >= currentPrice) {
-        return { action: 'BUY', quantity: Math.floor((portfolio.cash * 0.3) / currentPrice), score };
+    // OPTIMIZED thresholds based on backtest results
+    if (score > 0.15 && portfolio.cash >= currentPrice) {
+        return { action: 'BUY', quantity: Math.floor((portfolio.cash * 0.4) / currentPrice), score };
     }
-    if (score < 0.00 && portfolio.shares > 0) {
-        return { action: 'SELL', quantity: Math.max(1, Math.floor(portfolio.shares * 0.3)), score };
+    if (score < -0.10 && portfolio.shares > 0) {
+        return { action: 'SELL', quantity: Math.max(1, Math.floor(portfolio.shares * 0.4)), score };
     }
     return { action: 'HOLD', quantity: 0, score };
 }
