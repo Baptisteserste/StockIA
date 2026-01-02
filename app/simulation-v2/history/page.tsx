@@ -127,6 +127,7 @@ export default function HistoryV2Page() {
     const [models, setModels] = useState<Model[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [timeRanges, setTimeRanges] = useState<Record<string, '1D' | '7D' | 'ALL'>>({});
 
     useEffect(() => {
         fetchHistory();
@@ -198,28 +199,47 @@ export default function HistoryV2Page() {
         });
     };
 
+    // Format X axis by timestamp - SAME as simulation-v2
+    const formatXAxisForSim = (sim: HistorySimulation, day: number) => {
+        const point = sim.roiHistory.find(p => p.day === day);
+        if (point?.timestamp) {
+            const date = new Date(point.timestamp);
+            if (!isNaN(date.getTime())) {
+                return date.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            }
+        }
+        return `J${day}`;
+    };
+
+    // Get time range for a specific simulation
+    const getTimeRange = (simId: string): '1D' | '7D' | 'ALL' => timeRanges[simId] || 'ALL';
+    const setTimeRange = (simId: string, range: '1D' | '7D' | 'ALL') => {
+        setTimeRanges(prev => ({ ...prev, [simId]: range }));
+    };
+
+    // Filter data based on time range - SAME as simulation-v2
+    const getFilteredHistory = (sim: HistorySimulation) => {
+        const history = sim.roiHistory;
+        if (!history || history.length === 0) return [];
+
+        const range = getTimeRange(sim.id);
+        if (range === 'ALL') return history;
+
+        // Use last data point as reference
+        const lastPoint = history[history.length - 1];
+        const lastTimestamp = lastPoint?.timestamp ? new Date(lastPoint.timestamp).getTime() : Date.now();
+
+        const cutoffHours = range === '1D' ? 24 : 24 * 7;
+        const cutoffTime = lastTimestamp - (cutoffHours * 60 * 60 * 1000);
+
+        return history.filter(point => {
+            if (!point.timestamp) return false;
+            return new Date(point.timestamp).getTime() >= cutoffTime;
+        });
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-            {/* Header - EXACT simulation-v2 style */}
-            <header className="border-b border-slate-700/50 sticky top-0 bg-slate-900/80 backdrop-blur-sm z-50">
-                <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Link href="/" className="text-xl font-bold text-white">
-                            Stock<span className="text-blue-500">IA</span>
-                        </Link>
-                        <span className="text-slate-600">|</span>
-                        <span className="text-slate-400 font-medium">Historique</span>
-                    </div>
-                    <Link
-                        href="/simulation-v2"
-                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm font-semibold text-white transition-colors flex items-center gap-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Retour
-                    </Link>
-                </div>
-            </header>
-
             <main className="container mx-auto px-4 py-6">
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-white">Simulations Terminées</h1>
@@ -356,72 +376,104 @@ export default function HistoryV2Page() {
                                             })}
                                         </div>
 
-                                        {/* Chart - EXACT simulation-v2 (no Buy & Hold, same tooltip) */}
+                                        {/* Chart - EXACT simulation-v2 with time range buttons */}
                                         <Card className="bg-slate-900/80 border-slate-700/50 backdrop-blur-sm">
                                             <CardHeader className="pb-2">
                                                 <div className="flex items-center justify-between">
-                                                    <h3 className="font-bold text-white text-xl">Performance Comparative</h3>
-                                                    <p className="text-slate-400 text-sm">
-                                                        Prix final: <span className="text-white font-mono">${sim.roiHistory.length > 0 ? sim.roiHistory[sim.roiHistory.length - 1]?.price?.toFixed(2) : 'N/A'}</span>
-                                                    </p>
+                                                    <div>
+                                                        <h3 className="font-bold text-white text-xl">Performance Comparative</h3>
+                                                        <p className="text-slate-400 text-sm mt-1">
+                                                            Prix final: <span className="text-white font-mono">${sim.roiHistory.length > 0 ? sim.roiHistory[sim.roiHistory.length - 1]?.price?.toFixed(2) : 'N/A'}</span>
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        {(['1D', '7D', 'ALL'] as const).map((range) => (
+                                                            <Button
+                                                                key={range}
+                                                                size="sm"
+                                                                variant={getTimeRange(sim.id) === range ? 'default' : 'outline'}
+                                                                className={getTimeRange(sim.id) === range ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-800 border-slate-700 hover:bg-slate-700'}
+                                                                onClick={() => setTimeRange(sim.id, range)}
+                                                            >
+                                                                {range}
+                                                            </Button>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             </CardHeader>
                                             <CardContent>
-                                                {sim.roiHistory.length > 1 ? (
-                                                    <ResponsiveContainer width="100%" height={380}>
-                                                        <ComposedChart data={sim.roiHistory}>
-                                                            <ReferenceLine y={0} stroke="#64748b" strokeWidth={1} />
-                                                            <XAxis
-                                                                dataKey="day"
-                                                                stroke="#64748b"
-                                                                tick={{ fill: '#94a3b8', fontSize: 10 }}
-                                                                axisLine={{ stroke: '#334155' }}
-                                                                tickFormatter={(v) => `J${v}`}
-                                                            />
-                                                            <YAxis
-                                                                stroke="#64748b"
-                                                                tick={{ fill: '#94a3b8', fontSize: 11 }}
-                                                                tickFormatter={(v) => `${v.toFixed(0)}%`}
-                                                                axisLine={{ stroke: '#334155' }}
-                                                            />
-                                                            <Tooltip content={<EnhancedTooltip />} />
-                                                            <Legend wrapperStyle={{ paddingTop: '20px' }} formatter={(value) => <span className="text-slate-200 font-medium">{value}</span>} />
+                                                {(() => {
+                                                    const filteredData = getFilteredHistory(sim);
+                                                    const formatXAxis = (day: number) => {
+                                                        const point = filteredData.find(p => p.day === day);
+                                                        if (point?.timestamp) {
+                                                            const date = new Date(point.timestamp);
+                                                            if (!isNaN(date.getTime())) {
+                                                                return date.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                                                            }
+                                                        }
+                                                        return `J${day}`;
+                                                    };
+                                                    return filteredData.length > 1 ? (
+                                                        <ResponsiveContainer width="100%" height={380}>
+                                                            <ComposedChart data={filteredData}>
+                                                                <ReferenceLine y={0} stroke="#64748b" strokeWidth={1} />
+                                                                <XAxis
+                                                                    dataKey="day"
+                                                                    stroke="#64748b"
+                                                                    tick={{ fill: '#94a3b8', fontSize: 10 }}
+                                                                    axisLine={{ stroke: '#334155' }}
+                                                                    tickFormatter={formatXAxis}
+                                                                    angle={-45}
+                                                                    textAnchor="end"
+                                                                    height={70}
+                                                                    interval={Math.max(0, Math.floor(filteredData.length / 8))}
+                                                                />
+                                                                <YAxis
+                                                                    stroke="#64748b"
+                                                                    tick={{ fill: '#94a3b8', fontSize: 11 }}
+                                                                    tickFormatter={(v) => `${v.toFixed(0)}%`}
+                                                                    axisLine={{ stroke: '#334155' }}
+                                                                />
+                                                                <Tooltip content={<EnhancedTooltip />} />
+                                                                <Legend wrapperStyle={{ paddingTop: '20px' }} formatter={(value) => <span className="text-slate-200 font-medium">{value}</span>} />
 
-                                                            {/* Lines with trade dots - EXACT colors */}
-                                                            <Line type="monotone" dataKey="CHEAP" stroke="#a855f7" name="Agent Cheap" strokeWidth={2.5}
-                                                                dot={(props: any) => {
-                                                                    if (props.payload.cheapAction) {
-                                                                        return <circle cx={props.cx} cy={props.cy} r={7} fill={props.payload.cheapAction === 'BUY' ? '#22c55e' : '#ef4444'} stroke="#fff" strokeWidth={2} />;
-                                                                    }
-                                                                    return <circle cx={props.cx} cy={props.cy} r={0} />;
-                                                                }}
-                                                                activeDot={{ r: 6, strokeWidth: 2 }}
-                                                            />
-                                                            <Line type="monotone" dataKey="PREMIUM" stroke="#3b82f6" name="Agent Premium" strokeWidth={2.5}
-                                                                dot={(props: any) => {
-                                                                    if (props.payload.premiumAction) {
-                                                                        return <circle cx={props.cx} cy={props.cy} r={7} fill={props.payload.premiumAction === 'BUY' ? '#22c55e' : '#ef4444'} stroke="#fff" strokeWidth={2} />;
-                                                                    }
-                                                                    return <circle cx={props.cx} cy={props.cy} r={0} />;
-                                                                }}
-                                                                activeDot={{ r: 6, strokeWidth: 2 }}
-                                                            />
-                                                            <Line type="monotone" dataKey="ALGO" stroke="#f59e0b" name="Algo Bot" strokeWidth={2.5}
-                                                                dot={(props: any) => {
-                                                                    if (props.payload.algoAction) {
-                                                                        return <circle cx={props.cx} cy={props.cy} r={7} fill={props.payload.algoAction === 'BUY' ? '#22c55e' : '#ef4444'} stroke="#fff" strokeWidth={2} />;
-                                                                    }
-                                                                    return <circle cx={props.cx} cy={props.cy} r={0} />;
-                                                                }}
-                                                                activeDot={{ r: 6, strokeWidth: 2 }}
-                                                            />
-                                                        </ComposedChart>
-                                                    </ResponsiveContainer>
-                                                ) : (
-                                                    <div className="h-48 flex items-center justify-center text-slate-500">
-                                                        Pas assez de données
-                                                    </div>
-                                                )}
+                                                                {/* Lines with trade dots - EXACT colors */}
+                                                                <Line type="monotone" dataKey="CHEAP" stroke="#a855f7" name="Agent Cheap" strokeWidth={2.5}
+                                                                    dot={(props: any) => {
+                                                                        if (props.payload.cheapAction) {
+                                                                            return <circle cx={props.cx} cy={props.cy} r={7} fill={props.payload.cheapAction === 'BUY' ? '#22c55e' : '#ef4444'} stroke="#fff" strokeWidth={2} />;
+                                                                        }
+                                                                        return <circle cx={props.cx} cy={props.cy} r={0} />;
+                                                                    }}
+                                                                    activeDot={{ r: 6, strokeWidth: 2 }}
+                                                                />
+                                                                <Line type="monotone" dataKey="PREMIUM" stroke="#3b82f6" name="Agent Premium" strokeWidth={2.5}
+                                                                    dot={(props: any) => {
+                                                                        if (props.payload.premiumAction) {
+                                                                            return <circle cx={props.cx} cy={props.cy} r={7} fill={props.payload.premiumAction === 'BUY' ? '#22c55e' : '#ef4444'} stroke="#fff" strokeWidth={2} />;
+                                                                        }
+                                                                        return <circle cx={props.cx} cy={props.cy} r={0} />;
+                                                                    }}
+                                                                    activeDot={{ r: 6, strokeWidth: 2 }}
+                                                                />
+                                                                <Line type="monotone" dataKey="ALGO" stroke="#f59e0b" name="Algo Bot" strokeWidth={2.5}
+                                                                    dot={(props: any) => {
+                                                                        if (props.payload.algoAction) {
+                                                                            return <circle cx={props.cx} cy={props.cy} r={7} fill={props.payload.algoAction === 'BUY' ? '#22c55e' : '#ef4444'} stroke="#fff" strokeWidth={2} />;
+                                                                        }
+                                                                        return <circle cx={props.cx} cy={props.cy} r={0} />;
+                                                                    }}
+                                                                    activeDot={{ r: 6, strokeWidth: 2 }}
+                                                                />
+                                                            </ComposedChart>
+                                                        </ResponsiveContainer>
+                                                    ) : (
+                                                        <div className="h-48 flex items-center justify-center text-slate-500">
+                                                            Pas assez de données
+                                                        </div>
+                                                    )
+                                                })()}
                                             </CardContent>
                                         </Card>
 

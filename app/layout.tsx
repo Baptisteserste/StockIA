@@ -35,7 +35,7 @@ export default function RootLayout({
             {/* --- HEADER GLOBAL (Ta structure exacte) --- */}
             <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
               <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        
+
                 {/* Logo */}
                 <Link href="/" className="text-xl font-bold text-white hover:text-blue-400 transition-colors">
                   Stock<span className="text-blue-500">IA</span>
@@ -43,37 +43,37 @@ export default function RootLayout({
 
                 {/* Navigation Droite */}
                 <div className="flex items-center gap-4">
-              
-                  <Link 
+
+                  <Link
                     href="/pricing"
                     className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
                   >
                     Pricing
                   </Link>
 
-                  <Link 
+                  <Link
                     href="/"
                     className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-colors text-sm font-semibold"
                   >
                     Analyse Rapide
                   </Link>
 
-                  <Link 
-                    href="/simulation"
+                  <Link
+                    href="/simulation-v2"
                     className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-colors text-sm font-semibold"
                   >
                     Simulation de Trading
                   </Link>
 
                   <SignedIn>
-                    <Link 
-                      href="/dashboard" 
+                    <Link
+                      href="/dashboard"
                       className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-md transition-all"
                     >
                       <LayoutDashboard className="w-4 h-4" />
                       <span className="hidden sm:inline">Dashboard</span>
                     </Link>
-            
+
                     <div className="h-8 w-8 flex items-center justify-center">
                       <UserButton afterSignOutUrl="/" />
                     </div>
@@ -115,7 +115,7 @@ export default function RootLayout({
                   <div>
                     <h4 className="text-white font-bold mb-4">Avertissement</h4>
                     <p className="leading-relaxed italic">
-                      Les analyses et simulations ne constituent pas des conseils en investissement. 
+                      Les analyses et simulations ne constituent pas des conseils en investissement.
                       L'IA peut générer des erreurs. Restez maître de vos décisions financières.
                     </p>
                   </div>
