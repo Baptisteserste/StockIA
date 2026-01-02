@@ -84,6 +84,9 @@ export default function SimulationPage() {
   // Algo config
   const [weightTechnical, setWeightTechnical] = useState(60);
 
+  // Real-time price from market
+  const [realtimePrice, setRealtimePrice] = useState<number | null>(null);
+
   // Fetch models au mount
   useEffect(() => {
     const cached = localStorage.getItem('openrouter_models_v2');
@@ -129,6 +132,14 @@ export default function SimulationPage() {
       const data = await res.json();
       if (data.active) {
         setSimulation(data.simulation);
+        // Fetch real-time price
+        if (data.simulation?.symbol) {
+          const priceRes = await fetch(`/api/stock/price?symbol=${data.simulation.symbol}`);
+          const priceData = await priceRes.json();
+          if (priceData.price) {
+            setRealtimePrice(priceData.price);
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to fetch simulation status:', error);
@@ -430,9 +441,21 @@ export default function SimulationPage() {
                     )}
                   </CardHeader>
                   <CardContent>
-                    <div className={`text-3xl font-bold ${portfolio.roi >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {portfolio.roi >= 0 && '+'}{portfolio.roi.toFixed(2)}%
-                    </div>
+                    {(() => {
+                      const snapshotPrice = simulation.roiHistory?.length > 0
+                        ? simulation.roiHistory[simulation.roiHistory.length - 1]?.price
+                        : 0;
+                      const currentPrice = realtimePrice || snapshotPrice || 0;
+                      const currentValue = portfolio.cash + portfolio.shares * currentPrice;
+                      const dynamicRoi = simulation.startCapital > 0
+                        ? ((currentValue / simulation.startCapital) - 1) * 100
+                        : portfolio.roi;
+                      return (
+                        <div className={`text-3xl font-bold ${dynamicRoi >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {dynamicRoi >= 0 && '+'}{dynamicRoi.toFixed(2)}%
+                        </div>
+                      );
+                    })()}
                     <div className="mt-4 space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-slate-400">Cash</span>

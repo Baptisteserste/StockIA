@@ -157,6 +157,9 @@ export default function SimulationV2Page() {
     // Algo Bot config
     const [weightTechnical, setWeightTechnical] = useState(60);
 
+    // Real-time price from market
+    const [realtimePrice, setRealtimePrice] = useState<number | null>(null);
+
     // Start simulation handler
     const handleStartSimulation = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -312,9 +315,30 @@ export default function SimulationV2Page() {
         };
 
         fetchData();
+
+        // Fetch real-time price from market
+        const fetchPrice = async () => {
+            if (simulation?.symbol) {
+                try {
+                    const res = await fetch(`/api/stock/price?symbol=${simulation.symbol}`);
+                    const data = await res.json();
+                    if (data.price) {
+                        setRealtimePrice(data.price);
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch real-time price:', e);
+                }
+            }
+        };
+        fetchPrice();
+
         const interval = setInterval(fetchData, 30000);
-        return () => clearInterval(interval);
-    }, []);
+        const priceInterval = setInterval(fetchPrice, 60000); // Update price every 60s
+        return () => {
+            clearInterval(interval);
+            clearInterval(priceInterval);
+        };
+    }, [simulation?.symbol]);
 
     const getBotName = (type: string) => {
         switch (type) {
@@ -564,10 +588,11 @@ export default function SimulationV2Page() {
                 <div className="grid grid-cols-3 gap-5 mb-6">
                     {simulation.portfolios.map((portfolio) => {
                         const icon = getModelIcon(portfolio.botType);
-                        // Calculer le ROI dynamiquement avec le prix actuel
-                        const currentPrice = simulation.roiHistory?.length > 0
+                        // Calculer le ROI dynamiquement avec le prix temps réel OU le dernier snapshot
+                        const snapshotPrice = simulation.roiHistory?.length > 0
                             ? simulation.roiHistory[simulation.roiHistory.length - 1]?.price
                             : 0;
+                        const currentPrice = realtimePrice || snapshotPrice || 0;
                         const currentValue = portfolio.cash + portfolio.shares * currentPrice;
                         const dynamicRoi = simulation.startCapital > 0
                             ? ((currentValue / simulation.startCapital) - 1) * 100
@@ -681,7 +706,7 @@ export default function SimulationV2Page() {
                         <div>
                             <h3 className="font-bold text-white text-xl">Performance Comparative</h3>
                             <p className="text-slate-400 text-sm mt-1">
-                                Prix actuel: <span className="text-white font-mono">${simulation.roiHistory?.length > 0 ? simulation.roiHistory[simulation.roiHistory.length - 1]?.price?.toFixed(2) : 'N/A'}</span>
+                                Prix actuel: <span className="text-white font-mono">${realtimePrice?.toFixed(2) || (simulation.roiHistory?.length > 0 ? simulation.roiHistory[simulation.roiHistory.length - 1]?.price?.toFixed(2) : 'N/A')}</span>
                             </p>
                         </div>
                         <div className="flex gap-2">
