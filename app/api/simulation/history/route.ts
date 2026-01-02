@@ -36,29 +36,35 @@ export async function GET() {
     const history = simulations.map((sim) => {
       // Prix initial pour Buy & Hold
       const initialPrice = sim.snapshots[0]?.price || 1;
-      
-      // Construire l'historique ROI
-      const roiHistory = sim.snapshots.map((snap: MarketSnapshot, index: number) => {
-        const dayData: Record<string, number> = {
+
+      // Construire l'historique ROI avec les actions BUY/SELL pour le chart
+      const roiHistory = sim.snapshots.map((snap: MarketSnapshot & { decisions: BotDecision[] }, index: number) => {
+        const dayData: Record<string, any> = {
           day: index + 1,
+          timestamp: snap.timestamp,
           price: snap.price
         };
-        
+
         sim.portfolios.forEach((p: Portfolio) => {
           const value = p.cash + p.shares * snap.price;
           dayData[p.botType] = ((value / sim.startCapital) - 1) * 100;
         });
 
-        // Buy & Hold
-        dayData.BUYHOLD = ((snap.price / initialPrice) - 1) * 100;
-        
+        // Ajouter les actions pour les dots et le tooltip
+        snap.decisions.forEach((d: BotDecision) => {
+          if (d.action === 'BUY' || d.action === 'SELL') {
+            const actionKey = `${d.botType.toLowerCase()}Action`;
+            dayData[actionKey] = d.action;
+          }
+        });
+
         return dayData;
       });
 
       // Trouver le gagnant
-      const winner = sim.portfolios.reduce((best: Portfolio, p: Portfolio) => 
+      const winner = sim.portfolios.reduce((best: Portfolio, p: Portfolio) =>
         p.roi > best.roi ? p : best
-      , sim.portfolios[0]);
+        , sim.portfolios[0]);
 
       // Toutes les décisions avec leur jour
       const decisions = sim.snapshots.flatMap((snap: MarketSnapshot & { decisions: BotDecision[] }, dayIndex: number) =>
@@ -83,6 +89,8 @@ export async function GET() {
         durationDays: sim.durationDays,
         currentDay: sim.currentDay,
         status: sim.status,
+        cheapModelId: sim.cheapModelId,
+        premiumModelId: sim.premiumModelId,
         createdAt: sim.createdAt,
         updatedAt: sim.updatedAt,
         winner: winner ? {
