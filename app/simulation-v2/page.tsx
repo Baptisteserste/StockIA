@@ -553,38 +553,32 @@ export default function SimulationV2Page() {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-            {/* Header */}
-            <header className="border-b border-slate-700/50 sticky top-0 bg-slate-900/80 backdrop-blur-sm z-50">
+            {/* Simulation Info Bar (no duplicate logo) */}
+            <div className="bg-slate-900/50 border-b border-slate-700/30">
                 <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-                    <Link href="/" className="text-2xl font-bold text-white">
-                        Stock<span className="text-blue-500">IA</span>
-                        <span className="text-xs ml-2 px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded">v2</span>
-                    </Link>
                     <div className="flex items-center gap-4">
-                        <div className="text-right">
-                            <div className="flex items-center gap-2 text-white">
-                                <Activity className="h-4 w-4 text-blue-400" />
-                                <span className="font-semibold">{simulation.symbol}</span>
-                                <span className="text-slate-400">•</span>
-                                <span className="text-slate-300">Jour {simulation.currentDay}/{simulation.durationDays}</span>
-                            </div>
+                        <div className="flex items-center gap-2 text-white">
+                            <Activity className="h-4 w-4 text-blue-400" />
+                            <span className="font-semibold">{simulation.symbol}</span>
+                            <span className="text-slate-400">•</span>
+                            <span className="text-slate-300">Jour {simulation.currentDay}/{simulation.durationDays}</span>
                         </div>
+                    </div>
+                    <div className="flex items-center gap-3">
                         <Button
                             onClick={handleStopSimulation}
                             variant="destructive"
+                            size="sm"
                             className="bg-red-600 hover:bg-red-700"
                         >
                             Arrêter
                         </Button>
-                        <Link href="/simulation-v2/history" className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm text-white transition-colors">
+                        <Link href="/simulation-v2/history" className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm text-white transition-colors">
                             Historique
-                        </Link>
-                        <Link href="/simulation" className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm text-white transition-colors">
-                            Version actuelle
                         </Link>
                     </div>
                 </div>
-            </header>
+            </div>
 
             <main className="container mx-auto px-4 py-6">
                 {/* Agent Cards - REDESIGNED */}

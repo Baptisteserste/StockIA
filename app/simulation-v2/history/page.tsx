@@ -200,26 +200,6 @@ export default function HistoryV2Page() {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-            {/* Header - EXACT simulation-v2 style */}
-            <header className="border-b border-slate-700/50 sticky top-0 bg-slate-900/80 backdrop-blur-sm z-50">
-                <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Link href="/" className="text-xl font-bold text-white">
-                            Stock<span className="text-blue-500">IA</span>
-                        </Link>
-                        <span className="text-slate-600">|</span>
-                        <span className="text-slate-400 font-medium">Historique</span>
-                    </div>
-                    <Link
-                        href="/simulation-v2"
-                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm font-semibold text-white transition-colors flex items-center gap-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Retour
-                    </Link>
-                </div>
-            </header>
-
             <main className="container mx-auto px-4 py-6">
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-white">Simulations Terminées</h1>
