@@ -616,8 +616,8 @@ export default function SimulationV2Page() {
                                                 </p>
                                             </div>
                                         </div>
-                                        {/* Algo config gear */}
-                                        {portfolio.botType === 'ALGO' && (
+                                        {/* Algo config gear - only for signed in users */}
+                                        {portfolio.botType === 'ALGO' && isSignedIn && (
                                             <Popover>
                                                 <PopoverTrigger asChild>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white">
