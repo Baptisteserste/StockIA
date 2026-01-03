@@ -44,3 +44,11 @@ next-env.d.ts
 /lib/generated/prisma
 
 SIMULATION_README.md
+
+# Reports and documents (not for repo)
+*.pdf
+*.txt
+*.docx
+RAPPORT_STOCKIA.md
+NOTES_PRESENTATION.md
+/screenshots/

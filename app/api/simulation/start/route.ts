@@ -4,8 +4,15 @@ import { auth } from '@clerk/nextjs/server';
 
 export async function POST(req: NextRequest) {
   try {
-    // Auth optionnelle (peut être lancé par n'importe qui)
+    // Auth OBLIGATOIRE - seuls les utilisateurs connectés peuvent lancer une simulation
     const { userId } = await auth();
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Vous devez être connecté pour lancer une simulation' },
+        { status: 401 }
+      );
+    }
 
     const body = await req.json();
     const { symbol, startCapital, durationDays, cheapModelId, premiumModelId, useReddit } = body;
