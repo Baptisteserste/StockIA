@@ -2,6 +2,7 @@ import { Check, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SignUpButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import Link from "next/link";
 
 export default function PricingPage() {
@@ -17,7 +18,8 @@ export default function PricingPage() {
                 "Support communautaire",
             ],
             cta: "Commencer",
-            href: "/sign-up",
+            ctaSignedIn: "Accéder",
+            hrefSignedIn: "/",
             variant: "outline" as const,
         },
         {
@@ -34,7 +36,8 @@ export default function PricingPage() {
                 "Export des décisions en CSV/JSON",
             ],
             cta: "Passer à Pro",
-            href: "/sign-up",
+            ctaSignedIn: "Bientôt disponible",
+            hrefSignedIn: "#",
             variant: "default" as const,
             popular: true,
         },
@@ -78,9 +81,20 @@ export default function PricingPage() {
                             </ul>
                         </CardContent>
                         <CardFooter>
-                            <Button asChild variant={tier.variant} className="w-full py-6 text-lg cursor-pointer">
-                                <Link href={tier.href}>{tier.cta}</Link>
-                            </Button>
+                            {/* If signed out, show SignUp button */}
+                            <SignedOut>
+                                <SignUpButton mode="modal">
+                                    <Button variant={tier.variant} className="w-full py-6 text-lg cursor-pointer">
+                                        {tier.cta}
+                                    </Button>
+                                </SignUpButton>
+                            </SignedOut>
+                            {/* If signed in, show link to app */}
+                            <SignedIn>
+                                <Button asChild variant={tier.variant} className="w-full py-6 text-lg cursor-pointer">
+                                    <Link href={tier.hrefSignedIn}>{tier.ctaSignedIn}</Link>
+                                </Button>
+                            </SignedIn>
                         </CardFooter>
                     </Card>
                 ))}
