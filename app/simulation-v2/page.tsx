@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { TrendingUp, TrendingDown, Wallet, Activity, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -140,6 +141,7 @@ const EnhancedTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function SimulationV2Page() {
+    const { isSignedIn } = useUser();
     const [simulation, setSimulation] = useState<SimulationData | null>(null);
     const [models, setModels] = useState<Model[]>([]);
     const [loading, setLoading] = useState(true);
@@ -539,10 +541,10 @@ export default function SimulationV2Page() {
 
                             <Button
                                 type="submit"
-                                disabled={formLoading}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3"
+                                disabled={formLoading || !isSignedIn}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 disabled:opacity-50"
                             >
-                                {formLoading ? 'Démarrage...' : 'Démarrer la simulation'}
+                                {formLoading ? 'Démarrage...' : (isSignedIn ? 'Démarrer la simulation' : 'Connectez-vous pour lancer')}
                             </Button>
                         </form>
                     </div>
@@ -565,14 +567,16 @@ export default function SimulationV2Page() {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Button
-                            onClick={handleStopSimulation}
-                            variant="destructive"
-                            size="sm"
-                            className="bg-red-600 hover:bg-red-700"
-                        >
-                            Arrêter
-                        </Button>
+                        {isSignedIn && (
+                            <Button
+                                onClick={handleStopSimulation}
+                                variant="destructive"
+                                size="sm"
+                                className="bg-red-600 hover:bg-red-700"
+                            >
+                                Arrêter
+                            </Button>
+                        )}
                         <Link href="/simulation-v2/history" className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm text-white transition-colors">
                             Historique
                         </Link>
