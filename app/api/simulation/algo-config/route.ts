@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { auth } from '@clerk/nextjs/server';
 
-// PATCH: Update algo bot config for current simulation
+// PATCH: Update algo bot config for current simulation (auth required)
 export async function PATCH(request: Request) {
     try {
+        // Auth required
+        const { userId } = await auth();
+        if (!userId) {
+            return NextResponse.json(
+                { error: 'Vous devez être connecté pour modifier la configuration' },
+                { status: 401 }
+            );
+        }
+
         const body = await request.json();
         const { weightTechnical } = body;
 

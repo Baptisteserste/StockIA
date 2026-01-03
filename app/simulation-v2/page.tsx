@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { TrendingUp, TrendingDown, Wallet, Activity, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -140,6 +141,7 @@ const EnhancedTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function SimulationV2Page() {
+    const { isSignedIn } = useUser();
     const [simulation, setSimulation] = useState<SimulationData | null>(null);
     const [models, setModels] = useState<Model[]>([]);
     const [loading, setLoading] = useState(true);
@@ -419,16 +421,6 @@ export default function SimulationV2Page() {
     if (!simulation) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-                {/* Header */}
-                <header className="border-b border-slate-700/50 sticky top-0 bg-slate-900/80 backdrop-blur-sm z-50">
-                    <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-                        <Link href="/" className="text-2xl font-bold text-white">
-                            Stock<span className="text-blue-500">IA</span>
-                            <span className="text-xs ml-2 px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded">v2</span>
-                        </Link>
-                    </div>
-                </header>
-
                 <main className="container mx-auto px-4 py-12">
                     <div className="max-w-2xl mx-auto">
                         <h1 className="text-3xl font-bold text-white mb-2 text-center">Nouvelle Simulation</h1>
@@ -539,10 +531,10 @@ export default function SimulationV2Page() {
 
                             <Button
                                 type="submit"
-                                disabled={formLoading}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3"
+                                disabled={formLoading || !isSignedIn}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 disabled:opacity-50"
                             >
-                                {formLoading ? 'Démarrage...' : 'Démarrer la simulation'}
+                                {formLoading ? 'Démarrage...' : (isSignedIn ? 'Démarrer la simulation' : 'Connectez-vous pour lancer')}
                             </Button>
                         </form>
                     </div>
@@ -565,14 +557,16 @@ export default function SimulationV2Page() {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Button
-                            onClick={handleStopSimulation}
-                            variant="destructive"
-                            size="sm"
-                            className="bg-red-600 hover:bg-red-700"
-                        >
-                            Arrêter
-                        </Button>
+                        {isSignedIn && (
+                            <Button
+                                onClick={handleStopSimulation}
+                                variant="destructive"
+                                size="sm"
+                                className="bg-red-600 hover:bg-red-700"
+                            >
+                                Arrêter
+                            </Button>
+                        )}
                         <Link href="/simulation-v2/history" className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm text-white transition-colors">
                             Historique
                         </Link>
@@ -622,8 +616,8 @@ export default function SimulationV2Page() {
                                                 </p>
                                             </div>
                                         </div>
-                                        {/* Algo config gear */}
-                                        {portfolio.botType === 'ALGO' && (
+                                        {/* Algo config gear - only for signed in users */}
+                                        {portfolio.botType === 'ALGO' && isSignedIn && (
                                             <Popover>
                                                 <PopoverTrigger asChild>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white">
