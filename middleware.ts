@@ -3,21 +3,27 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 // Public routes do not require a Clerk session. Add API cron endpoint here so external
 // schedulers (GitHub Actions, Cron jobs) can call it using our own bearer secret.
 const isPublicRoute = createRouteMatcher([
+  // Auth pages
   '/sign-in(.*)',
   '/sign-up(.*)',
-  '/',
-  // Allow the cron tick endpoint without Clerk auth. It performs its own Bearer check.
-  '/api/cron/simulation-tick(.*)',
-  // Allow the openrouter models endpoint (read-only, for UI)
-  '/api/openrouter/models(.*)',
-  // Public simulation endpoints (readonly - start/stop have their own auth checks)
-  '/api/simulation/status(.*)',
-  '/api/simulation/history(.*)',
-  '/api/simulation/algo-config(.*)',
-  '/api/debug/(.*)',
-  '/api/stock/(.*)',
-  // Public simulation page
-  '/simulation(.*)'
+
+  // Public pages (accessible without login)
+  '/',                    // Home - analyse rapide
+  '/pricing(.*)',         // Pricing page
+  '/privacy(.*)',         // Privacy policy (RGPD)
+  '/terms(.*)',           // Terms of service
+  '/simulation(.*)',      // Simulation pages (readonly for non-auth)
+  '/simulation-v2(.*)',   // Simulation V2 pages
+
+  // Public API endpoints (readonly)
+  '/api/cron/simulation-tick(.*)',   // CRON - has its own Bearer check
+  '/api/openrouter/models(.*)',      // Models list for UI
+  '/api/simulation/status(.*)',      // Current simulation status (readonly)
+  '/api/simulation/history(.*)',     // Simulation history (readonly)
+  '/api/simulation/algo-config(.*)', // Algo config (GET only, PATCH protected in route)
+  '/api/debug/(.*)',                 // Debug endpoints
+  '/api/stock/(.*)',                 // Stock price data
+  '/api/analyze-stock(.*)',          // Quick analysis (uses credits - checked in route)
 ])
 
 export default clerkMiddleware(async (auth, request) => {
