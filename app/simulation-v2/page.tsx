@@ -421,16 +421,6 @@ export default function SimulationV2Page() {
     if (!simulation) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-                {/* Header */}
-                <header className="border-b border-slate-700/50 sticky top-0 bg-slate-900/80 backdrop-blur-sm z-50">
-                    <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-                        <Link href="/" className="text-2xl font-bold text-white">
-                            Stock<span className="text-blue-500">IA</span>
-                            <span className="text-xs ml-2 px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded">v2</span>
-                        </Link>
-                    </div>
-                </header>
-
                 <main className="container mx-auto px-4 py-12">
                     <div className="max-w-2xl mx-auto">
                         <h1 className="text-3xl font-bold text-white mb-2 text-center">Nouvelle Simulation</h1>
