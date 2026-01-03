@@ -10,6 +10,12 @@ const isPublicRoute = createRouteMatcher([
   '/api/cron/simulation-tick(.*)',
   // Allow the openrouter models endpoint (read-only, for UI)
   '/api/openrouter/models(.*)',
+  // Public simulation endpoints (readonly - start/stop have their own auth checks)
+  '/api/simulation/status(.*)',
+  '/api/simulation/history(.*)',
+  '/api/simulation/algo-config(.*)',
+  '/api/debug/(.*)',
+  '/api/stock/(.*)',
   // Public simulation page
   '/simulation(.*)'
 ])
